@@ -1,0 +1,4 @@
+{
+  "name": "qa_guru_mobile",
+  "install": "./gradlew --no-daemon build"
+}

@@ -1,17 +1,20 @@
 HELP.md
 build/
-gradle/
-!**/src/main/**
-!**/src/test/**
+
+### Gradle ###
+.gradle/
+# Keep the Gradle wrapper, ignore everything else under gradle/
+gradle/*
+!gradle/wrapper/
+gradle/wrapper/*
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
 ### IntelliJ IDEA ###
 .idea
 *.iws
 *.iml
 *.ipr
-
-### Gradle ###
-.gradle
 
 ### Logs ###
 *.log
