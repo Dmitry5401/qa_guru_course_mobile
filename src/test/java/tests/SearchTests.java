@@ -1,64 +1,75 @@
 package tests;
 
+import config.BrowserstackConfig;
 import io.appium.java_client.AppiumBy;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class SearchTests {
 
+    private RemoteWebDriver driver;
+
+    @BeforeEach
+    void createDriver() throws MalformedURLException {
+        Map<String, Object> browserstackOptions = new HashMap<>();
+        browserstackOptions.put("userName", BrowserstackConfig.user());
+        browserstackOptions.put("accessKey", BrowserstackConfig.accessKey());
+        browserstackOptions.put("appiumVersion", BrowserstackConfig.appiumVersion());
+        browserstackOptions.put("deviceName", BrowserstackConfig.device());
+        browserstackOptions.put("osVersion", BrowserstackConfig.osVersion());
+        browserstackOptions.put("projectName", "First Java Project");
+        browserstackOptions.put("buildName", "browserstack-build-1");
+        browserstackOptions.put("sessionName", "first_test");
+
+        MutableCapabilities capabilities = new MutableCapabilities();
+        capabilities.setCapability("platformName", "android");
+        capabilities.setCapability("appium:automationName", "UiAutomator2");
+        // app_url (bs://...) или custom_id уже загруженного в App Automate приложения
+        capabilities.setCapability("appium:app", BrowserstackConfig.app());
+        capabilities.setCapability("bstack:options", browserstackOptions);
+
+        driver = new RemoteWebDriver(URI.create(BrowserstackConfig.hubUrl()).toURL(), capabilities);
+    }
+
+    @AfterEach
+    void quitDriver() {
+        if (driver != null) {
+            driver.quit();
+        }
+    }
+
     @Test
-    void successfulSearchTest() throws MalformedURLException, InterruptedException {
-        DesiredCapabilities caps = new DesiredCapabilities();
+    void successfulSearchTest() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
 
-        // Set your access credentials
-        caps.setCapability("browserstack.user", "dmitry_8rmWIH");
-        caps.setCapability("browserstack.key", "zW2u3gAFLNoZwF4qi874");
-
-        // Set URL of the application under test
-        //caps.setCapability("app", "bs://c700ce60cf13ae8ed97705a55b8e022f13c5827c");
-        caps.setCapability("appium:app", "bs://sample.app");
-
-        // Specify device and os_version for testing
-        caps.setCapability("device", "Samsung Galaxy S22 Ultra");
-        caps.setCapability("os_version", "12.0");
-
-        // Set other BrowserStack capabilities
-        caps.setCapability("project", "First Java Project");
-        caps.setCapability("build", "browserstack-build-1");
-        caps.setCapability("name", "first_test");
-
-
-        // Initialise the remote Webdriver using BrowserStack remote URL
-        // and desired capabilities defined above
-        RemoteWebDriver driver = new RemoteWebDriver(
-            new URL("https://hub.browserstack.com/wd/hub"), caps);
-
-        // Test case for the BrowserStack sample Android app.
-        // If you have uploaded your app, update the test case here.
-        WebElement searchElement = (WebElement) new WebDriverWait(driver, Duration.ofSeconds(30)).until(
-            ExpectedConditions.elementToBeClickable(
-                AppiumBy.accessibilityId("Search Wikipedia")));
+        WebElement searchElement = wait.until(
+                ExpectedConditions.elementToBeClickable(
+                        AppiumBy.accessibilityId("Search Wikipedia")));
         searchElement.click();
-        WebElement insertTextElement = (WebElement) new WebDriverWait(driver, Duration.ofSeconds(30)).until(
-            ExpectedConditions.elementToBeClickable(
-                AppiumBy.id("org.wikipedia.alpha:id/addLangContainer")));
+
+        WebElement insertTextElement = wait.until(
+                ExpectedConditions.elementToBeClickable(
+                        AppiumBy.id("org.wikipedia.alpha:id/search_src_text")));
         insertTextElement.sendKeys("Appium");
-        Thread.sleep(5000);
-        List<WebElement> allProductsName = driver.findElements(AppiumBy.className(
-            "android.widget.TextView"));
-        assert (!allProductsName.isEmpty());
 
-        // Invoke driver.quit() after the test is done to indicate that the test is completed.
-        driver.quit();
-
+        List<WebElement> searchResults = wait.until(
+                ExpectedConditions.numberOfElementsToBeMoreThan(
+                        AppiumBy.id("org.wikipedia.alpha:id/page_list_item_title"), 0));
+        assertFalse(searchResults.isEmpty());
     }
 }
