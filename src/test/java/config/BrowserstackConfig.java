@@ -3,8 +3,9 @@ package config;
 /**
  * Настройки запуска на BrowserStack App Automate.
  * <p>
- * Значения читаются из системных свойств Gradle (-Dbrowserstack.app=...) или,
- * если свойство не задано, из переменных окружения. Секреты и app_url не хранятся в коде.
+ * Значения по умолчанию хранятся здесь строками, поэтому тесты запускаются без
+ * дополнительной настройки. Любое из них можно переопределить системным свойством
+ * (например, {@code -Dbrowserstack.app=bs://...}) или переменной окружения.
  * <p>
  * Приложение сначала нужно загрузить в App Automate и получить app_url:
  * <pre>
@@ -12,53 +13,51 @@ package config;
  *   -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
  *   -F "file=@/path/to/app.apk" -F 'data={"custom_id": "WikipediaSample"}'
  * </pre>
- * Ответ содержит {@code app_url} вида {@code bs://<hash>}; его (или custom_id)
- * и нужно передать в {@code browserstack.app}.
+ * Ответ содержит {@code app_url} вида {@code bs://<hash>}; в {@code APP} можно
+ * положить как его, так и custom_id приложения.
  */
 public final class BrowserstackConfig {
+
+    private static final String USER = "dmitry_8rmWIH";
+    private static final String ACCESS_KEY = "zW2u3gAFLNoZwF4qi874";
+    private static final String APP = "WikipediaSample";
+    private static final String DEVICE = "Samsung Galaxy S22 Ultra";
+    private static final String OS_VERSION = "12.0";
+    private static final String APPIUM_VERSION = "2.0.1";
+    private static final String HUB_URL = "https://hub.browserstack.com/wd/hub";
 
     private BrowserstackConfig() {
     }
 
     public static String user() {
-        return required("browserstack.user", "BROWSERSTACK_USERNAME");
+        return value("browserstack.user", "BROWSERSTACK_USERNAME", USER);
     }
 
     public static String accessKey() {
-        return required("browserstack.key", "BROWSERSTACK_ACCESS_KEY");
+        return value("browserstack.key", "BROWSERSTACK_ACCESS_KEY", ACCESS_KEY);
     }
 
     public static String app() {
-        return required("browserstack.app", "BROWSERSTACK_APP_ID");
+        return value("browserstack.app", "BROWSERSTACK_APP_ID", APP);
     }
 
     public static String device() {
-        return optional("browserstack.device", "BROWSERSTACK_DEVICE", "Samsung Galaxy S22 Ultra");
+        return value("browserstack.device", "BROWSERSTACK_DEVICE", DEVICE);
     }
 
     public static String osVersion() {
-        return optional("browserstack.osVersion", "BROWSERSTACK_OS_VERSION", "12.0");
+        return value("browserstack.osVersion", "BROWSERSTACK_OS_VERSION", OS_VERSION);
     }
 
     public static String appiumVersion() {
-        return optional("browserstack.appiumVersion", "BROWSERSTACK_APPIUM_VERSION", "2.0.1");
+        return value("browserstack.appiumVersion", "BROWSERSTACK_APPIUM_VERSION", APPIUM_VERSION);
     }
 
     public static String hubUrl() {
-        return optional("browserstack.hub", "BROWSERSTACK_HUB", "https://hub.browserstack.com/wd/hub");
+        return value("browserstack.hub", "BROWSERSTACK_HUB", HUB_URL);
     }
 
-    private static String required(String systemProperty, String environmentVariable) {
-        String value = optional(systemProperty, environmentVariable, null);
-        if (value == null) {
-            throw new IllegalStateException(
-                    "Не задано обязательное значение: передайте -D" + systemProperty
-                            + "=... или переменную окружения " + environmentVariable);
-        }
-        return value;
-    }
-
-    private static String optional(String systemProperty, String environmentVariable, String defaultValue) {
+    private static String value(String systemProperty, String environmentVariable, String defaultValue) {
         String value = System.getProperty(systemProperty);
         if (isBlank(value)) {
             value = System.getenv(environmentVariable);
