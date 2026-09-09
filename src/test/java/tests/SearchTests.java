@@ -2,12 +2,12 @@ package tests;
 
 import config.BrowserstackConfig;
 import io.appium.java_client.AppiumBy;
+import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.android.options.UiAutomator2Options;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class SearchTests {
 
-    private RemoteWebDriver driver;
+    private AndroidDriver driver;
 
     @BeforeEach
     void createDriver() throws MalformedURLException {
@@ -36,14 +36,12 @@ public class SearchTests {
         browserstackOptions.put("buildName", "browserstack-build-1");
         browserstackOptions.put("sessionName", "first_test");
 
-        MutableCapabilities capabilities = new MutableCapabilities();
-        capabilities.setCapability("platformName", "android");
-        capabilities.setCapability("appium:automationName", "UiAutomator2");
+        UiAutomator2Options options = new UiAutomator2Options();
         // app_url (bs://...) или custom_id уже загруженного в App Automate приложения
-        capabilities.setCapability("appium:app", BrowserstackConfig.app());
-        capabilities.setCapability("bstack:options", browserstackOptions);
+        options.setApp(BrowserstackConfig.app());
+        options.setCapability("bstack:options", browserstackOptions);
 
-        driver = new RemoteWebDriver(URI.create(BrowserstackConfig.hubUrl()).toURL(), capabilities);
+        driver = new AndroidDriver(URI.create(BrowserstackConfig.hubUrl()).toURL(), options);
     }
 
     @AfterEach
