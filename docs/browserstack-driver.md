@@ -3,7 +3,7 @@
 Документ фиксирует, почему в проекте выбраны W3C-capabilities, `AndroidDriver` и настройки в конфиге,
 а не привычный по многим примерам `RemoteWebDriver` с плоскими capability. Все утверждения ниже
 проверены прогонами на реальном хабе BrowserStack App Automate 9 сентября 2026 года
-(Selenide 6.13.0, Selenium 4.8.3, java-client 8.3.0, приложение WikipediaSample).
+(Selenide 6.13.0, Selenium 4.8.3, java-client 8.3.0, приложение WikipediaSample ).
 
 ## С чего началось
 
