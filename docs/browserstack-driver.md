@@ -2,8 +2,9 @@
 
 Документ фиксирует, почему в проекте выбраны W3C-capabilities, `AndroidDriver` и настройки в конфиге,
 а не привычный по многим примерам `RemoteWebDriver` с плоскими capability. Все утверждения ниже
-проверены прогонами на реальном хабе BrowserStack App Automate 9 сентября 2026 года
-(Selenide 6.13.0, Selenium 4.8.3, java-client 8.3.0, приложение WikipediaSample ).
+проверены прогонами на реальном хабе BrowserStack App Automate 9–10 сентября 2026 года
+(Selenide 6.13.0, Selenium 4.8.3, java-client 8.3.0, приложения WikipediaSample для Android
+и Sample iOS для iOS).
 
 ## С чего началось
 
@@ -221,6 +222,50 @@ GET https://en.m.wikipedia.org/api/rest_v1/page/mobile-sections/Selenide
 Именно на них построен `ArticleTests`. Если однажды приложение обновят до сборки с живым API,
 в тест можно будет добавить проверку самого текста.
 
+## 8. iOS: другой драйвер, другие локаторы, тот же подход
+
+Вывод из раздела 2 («класс драйвера должен соответствовать платформе») на iOS повторяется буквально:
+автоматизация там идёт через XCUITest, поэтому нужны `IOSDriver` и `XCUITestOptions` вместо
+`AndroidDriver` и `UiAutomator2Options`. Всё остальное в `BrowserstackIosDriver` совпадает с
+Android-драйвером: тот же хаб, тот же `bstack:options`, тот же W3C-формат.
+
+Приложения Wikipedia для iOS у BrowserStack нет — по ссылке отдаётся 403, доступен только
+`BStackSampleApp.ipa`. Поэтому iOS-тест написан на их демо-приложении Sample iOS.
+
+Платформа выбирается методом `driver()` в `TestBase`. Так сделано потому, что
+`Configuration.browser` — статическое глобальное поле: если выставлять его в `@BeforeAll`,
+классы разных платформ в одной JVM переопределят драйвер друг другу. В `@BeforeEach` каждый тест
+получает свою платформу, и в одном прогоне это видно по логу:
+
+```
+Created webdriver in thread 1: AndroidDriver -> AndroidDriver:  on ANDROID (f77f3830...)
+Created webdriver in thread 1: IOSDriver     -> IOSDriver:      on IOS     (3a530ef1...)
+Created webdriver in thread 1: AndroidDriver -> AndroidDriver:  on ANDROID (cb62e6d9...)
+```
+
+Локаторы на iOS устроены иначе, чем на Android: `resource-id` не существует, а `accessibilityId`
+попадает в атрибут `name`. Дерево состоит из элементов `XCUIElementType*`:
+
+```xml
+<XCUIElementTypeStaticText name="Text Output" value="Waiting for text input." visible="true"/>
+<XCUIElementTypeTextField  name="Text Input"  value="Enter a text"            visible="true"/>
+```
+
+Из этого следуют две вещи, на которых легко ошибиться:
+
+- `getText()` возвращает атрибут `value`, а не текст узла. Проверка
+  `$(accessibilityId("Text Output")).shouldHave(exactText("Waiting for text input."))` проходит
+  именно поэтому;
+- у пустого поля ввода в `value` лежит подсказка (`Enter a text`), а не пустая строка, поэтому
+  «поле пустое» через текст проверять нельзя.
+
+Перевод строки в конце `sendKeys` закрывает клавиатуру и отправляет текст в вывод — на этом
+построен `IosTextInputTests`.
+
+Версии iOS устаревают так же, как версии Android из раздела 6: на сентябрь 2026 в App Automate
+доступны 10, 11, 13, 14, 15, 16, 17, 18, 26 и 27 Beta, то есть iOS 12 в списке нет вовсе.
+В конфиге стоит iPhone 14 с iOS 16 — это реальное устройство (`realMobile: true`).
+
 ## Чек-лист, если сессия не создаётся
 
 1. `BROWSERSTACK_INVALID_APP_CAP` — приложение не видно хабу. Проверить `recent_apps`, убедиться,
@@ -231,4 +276,6 @@ GET https://en.m.wikipedia.org/api/rest_v1/page/mobile-sections/Selenide
 4. `IllegalArgumentException: Illegal key values seen in w3c capabilities` — в проекте
    Selenium 4.9+, а capability остались плоскими.
 5. `Method is not implemented` на `isElementDisplayed`, `getAttribute` или `getPageSource` —
-   драйвер создан как `RemoteWebDriver` вместо `AndroidDriver`.
+   драйвер создан как `RemoteWebDriver` вместо `AndroidDriver` (на iOS — вместо `IOSDriver`).
+6. Тест iOS-класса поднялся на Android-устройстве (или наоборот) — `Configuration.browser`
+   выставлен в `@BeforeAll` вместо `@BeforeEach`, см. раздел 8.

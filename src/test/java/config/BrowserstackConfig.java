@@ -15,6 +15,8 @@ package config;
  * </pre>
  * Ответ содержит {@code app_url} вида {@code bs://<hash>}; в {@code APP} можно
  * положить как его, так и custom_id приложения.
+ * <p>
+ * Настройки без приставки относятся к Android, с приставкой {@code IOS_} — к iOS.
  */
 public final class BrowserstackConfig {
 
@@ -23,6 +25,9 @@ public final class BrowserstackConfig {
     private static final String APP = "WikipediaSample";
     private static final String DEVICE = "Samsung Galaxy S22 Ultra";
     private static final String OS_VERSION = "12.0";
+    private static final String IOS_APP = "BStackSampleApp";
+    private static final String IOS_DEVICE = "iPhone 14";
+    private static final String IOS_OS_VERSION = "16";
     private static final String APPIUM_VERSION = "2.0.1";
     private static final String HUB_URL = "https://hub.browserstack.com/wd/hub";
 
@@ -47,6 +52,18 @@ public final class BrowserstackConfig {
 
     public static String osVersion() {
         return value("browserstack.osVersion", "BROWSERSTACK_OS_VERSION", OS_VERSION);
+    }
+
+    public static String iosApp() {
+        return value("browserstack.ios.app", "BROWSERSTACK_IOS_APP_ID", IOS_APP);
+    }
+
+    public static String iosDevice() {
+        return value("browserstack.ios.device", "BROWSERSTACK_IOS_DEVICE", IOS_DEVICE);
+    }
+
+    public static String iosOsVersion() {
+        return value("browserstack.ios.osVersion", "BROWSERSTACK_IOS_OS_VERSION", IOS_OS_VERSION);
     }
 
     public static String appiumVersion() {
