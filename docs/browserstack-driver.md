@@ -196,6 +196,31 @@ Timeout: 30 s.
 а устройств с Android 9.0 в списке нет вообще. Актуальный список:
 `GET https://api-cloud.browserstack.com/app-automate/devices.json`.
 
+## 7. Текст статей в этом приложении больше не грузится
+
+WikipediaSample.apk — сборка 2.5.194-alpha от 30 мая 2017 года, и содержимое статей она
+запрашивает через Mobile Content Service. Wikimedia его отключила:
+
+```
+GET https://en.m.wikipedia.org/api/rest_v1/page/mobile-sections/Selenide
+403 Mobile Content Service is decommissioned. See https://phabricator.wikimedia.org/T328036
+```
+
+Поиск при этом работает — он идёт через другой API, `action=query&list=prefixsearch`, и лента
+на главном экране тоже наполняется. А вот на экране любой открытой статьи вместо текста всегда
+будет `org.wikipedia.alpha:id/page_error` с надписью `An error occurred` и кнопкой `GO BACK`.
+
+Практический вывод для тестов: содержимое статьи проверять нечем, но переход на её экран
+проверяется надёжно. На экране статьи есть два узла, которых нет в результатах поиска:
+
+- заголовок в тулбаре — `//*[@resource-id='org.wikipedia.alpha:id/page_toolbar']/android.widget.TextView`
+  (своего resource-id у него нет);
+- действия статьи — `accessibilityId` `Table of Contents`, `Find in page`, `Share the article link`,
+  `Change language`, `Add this article to a reading list`.
+
+Именно на них построен `ArticleTests`. Если однажды приложение обновят до сборки с живым API,
+в тест можно будет добавить проверку самого текста.
+
 ## Чек-лист, если сессия не создаётся
 
 1. `BROWSERSTACK_INVALID_APP_CAP` — приложение не видно хабу. Проверить `recent_apps`, убедиться,
