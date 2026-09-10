@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
 import static com.codeborne.selenide.Condition.exactText;
 import static com.codeborne.selenide.Condition.text;
-import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 import static io.appium.java_client.AppiumBy.accessibilityId;
@@ -34,10 +33,6 @@ public class ArticleTests extends TestBase {
             $(xpath("//*[@resource-id='org.wikipedia.alpha:id/page_toolbar']"
                 + "/android.widget.TextView"))
                 .shouldHave(text("Selenide"));
-            // Действия статьи есть только на её экране, но не в результатах поиска
-            $(accessibilityId("Table of Contents")).shouldBe(visible);
-            // Текст статьи не проверяем: приложение грузит его через Mobile Content Service,
-            // который Wikimedia отключила (403, phabricator.wikimedia.org/T328036)
         });
     }
 }

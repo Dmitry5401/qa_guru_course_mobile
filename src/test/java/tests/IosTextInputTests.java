@@ -9,12 +9,11 @@ import static io.appium.java_client.AppiumBy.accessibilityId;
 import static io.qameta.allure.Allure.step;
 
 /**
- * Тесты на iOS. Приложения Wikipedia для iOS у BrowserStack нет, поэтому здесь
- * используется их собственное демо-приложение Sample iOS.
+ * Тесты на iOS. Используется их собственное демо-приложение Sample iOS.
  */
 public class IosTextInputTests extends TestBaseIos {
 
-    private static final String TEXT = "selenide@qa.guru";
+    private static final String TEXT = "selenide";
 
     @Test
     void enteredTextIsShownInOutputTest() {
