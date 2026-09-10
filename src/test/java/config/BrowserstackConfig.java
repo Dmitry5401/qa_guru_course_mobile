@@ -68,4 +68,8 @@ public final class BrowserstackConfig {
     private static boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
+
+    public static String getUser(){return USER;}
+
+    public static String getAccessKey(){return ACCESS_KEY;}
 }
