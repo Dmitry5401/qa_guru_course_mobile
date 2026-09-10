@@ -1,6 +1,8 @@
 HELP.md
 build/
-gradle/
+gradle/*
+# wrapper должен лежать в репозитории, иначе ./gradlew не соберётся на Jenkins
+!gradle/wrapper/
 !**/src/main/**
 !**/src/test/**
 
