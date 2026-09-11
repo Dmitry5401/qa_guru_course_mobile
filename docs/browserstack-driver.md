@@ -47,7 +47,7 @@ browserstackOptions.put("deviceName", testConfig.androidDevice());
 browserstackOptions.put("osVersion", testConfig.androidOsVersion());
 
 UiAutomator2Options options = new UiAutomator2Options();
-options.setApp(testConfig.app());
+options.setApp(testConfig.androidApp());
 options.setCapability("bstack:options", browserstackOptions);
 ```
 
@@ -133,7 +133,7 @@ defineCommand("getPageSource",       get("/session/:sessionId/source"));
 Логин и ключ лежат в `src/test/resources/auth.properties`, остальное — в `test.properties`,
 а читает их библиотека Owner через интерфейсы `config/AuthConfig` и `config/TestConfig`.
 Любое значение переопределяется переменной окружения или системным свойством с тем же именем
-(`BROWSERSTACK_APP_ID`, `-DBROWSERSTACK_APP_ID=...`). `./gradlew test` работает без флагов,
+(`BROWSERSTACK_ANDROID_APP_ID`, `-DBROWSERSTACK_ANDROID_APP_ID=...`). `./gradlew test` работает без флагов,
 при этом ключ можно не держать в репозитории, а устройство — менять на запуск, не правя драйвер.
 Подробнее про источники и их приоритет — в `jenkins.md`.
 

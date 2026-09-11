@@ -35,7 +35,7 @@ public class BrowserstackMobileDriver implements WebDriverProvider {
         UiAutomator2Options options = new UiAutomator2Options();
         options.merge(capabilities);
         // app_url (bs://...) или custom_id уже загруженного в App Automate приложения
-        options.setApp(testConfig.app());
+        options.setApp(testConfig.androidApp());
         options.setCapability("bstack:options", browserstackOptions);
 
         try {

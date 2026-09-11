@@ -95,7 +95,7 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 | `BROWSERSTACK_ACCESS_KEY` | `auth.properties` | ключ аккаунта |
 | `BROWSERSTACK_HUB` | `test.properties` | `https://hub.browserstack.com/wd/hub` |
 | `BROWSERSTACK_APPIUM_VERSION` | `test.properties` | `2.0.1` |
-| `BROWSERSTACK_APP_ID` | `test.properties` | `WikipediaSample` |
+| `BROWSERSTACK_ANDROID_APP_ID` | `test.properties` | `WikipediaSample` |
 | `BROWSERSTACK_ANDROID_DEVICE` | `test.properties` | `Samsung Galaxy S22 Ultra` |
 | `BROWSERSTACK_ANDROID_OS_VERSION` | `test.properties` | `12.0` |
 | `BROWSERSTACK_IOS_APP_ID` | `test.properties` | `BStackSampleApp` |

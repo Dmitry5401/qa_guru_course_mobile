@@ -28,8 +28,8 @@ public interface TestConfig extends Config {
     @Key("BROWSERSTACK_APPIUM_VERSION")
     String appiumVersion();
 
-    @Key("BROWSERSTACK_APP_ID")
-    String app();
+    @Key("BROWSERSTACK_ANDROID_APP_ID")
+    String androidApp();
 
     @Key("BROWSERSTACK_ANDROID_DEVICE")
     String androidDevice();
