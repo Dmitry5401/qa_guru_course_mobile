@@ -9,12 +9,12 @@ pipeline {
                 'например tests.IosTextInputTests или tests.Article*'
         )
         string(
-            name: 'BROWSERSTACK_DEVICE',
+            name: 'BROWSERSTACK_ANDROID_DEVICE',
             defaultValue: 'Samsung Galaxy S22 Ultra',
             description: 'Android-устройство'
         )
         string(
-            name: 'BROWSERSTACK_OS_VERSION',
+            name: 'BROWSERSTACK_ANDROID_OS_VERSION',
             defaultValue: '12.0',
             description: 'Версия Android'
         )

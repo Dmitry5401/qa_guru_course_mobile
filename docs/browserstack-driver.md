@@ -43,8 +43,8 @@ capability были плоские (`browserstack.user`, `device`, `os_version`)
 Map<String, Object> browserstackOptions = new HashMap<>();
 browserstackOptions.put("userName", auth.user());
 browserstackOptions.put("accessKey", auth.accessKey());
-browserstackOptions.put("deviceName", testConfig.device());
-browserstackOptions.put("osVersion", testConfig.osVersion());
+browserstackOptions.put("deviceName", testConfig.androidDevice());
+browserstackOptions.put("osVersion", testConfig.androidOsVersion());
 
 UiAutomator2Options options = new UiAutomator2Options();
 options.setApp(testConfig.app());
@@ -197,6 +197,19 @@ Timeout: 30 s.
 На сентябрь 2026 в App Automate самый старый доступный Pixel — Google Pixel 6 (Android 12),
 а устройств с Android 9.0 в списке нет вообще. Актуальный список:
 `GET https://api-cloud.browserstack.com/app-automate/devices.json`.
+
+Сверху диапазон тоже ограничен, и упирается он уже не в BrowserStack, а в само приложение.
+На Google Pixel 9 с Android 16 сессия создаётся, приложение запускается, но экрана поиска в нём
+нет — тест падает на первом же элементе:
+
+```
+Caused by: org.openqa.selenium.NoSuchElementException
+  AppiumBy.accessibilityId: Search Wikipedia
+```
+
+WikipediaSample.apk собран в 2017 году, поэтому выбирать под него современный флагман нельзя.
+Проверено: на Google Pixel 6 с Android 12 тот же тест проходит. Так что устройство менять можно,
+но версию ОС стоит держать близкой к 12.0.
 
 ## 7. Текст статей в этом приложении больше не грузится
 

@@ -31,11 +31,11 @@ public interface TestConfig extends Config {
     @Key("BROWSERSTACK_APP_ID")
     String app();
 
-    @Key("BROWSERSTACK_DEVICE")
-    String device();
+    @Key("BROWSERSTACK_ANDROID_DEVICE")
+    String androidDevice();
 
-    @Key("BROWSERSTACK_OS_VERSION")
-    String osVersion();
+    @Key("BROWSERSTACK_ANDROID_OS_VERSION")
+    String androidOsVersion();
 
     @Key("BROWSERSTACK_IOS_APP_ID")
     String iosApp();

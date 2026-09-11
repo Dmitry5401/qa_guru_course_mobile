@@ -36,7 +36,8 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 1. **New Item → Freestyle project**.
 2. **This project is parameterised**, добавить строковые параметры. Имена обязаны совпадать
    с ключами в `test.properties`, иначе Owner их не подхватит:
-   `BROWSERSTACK_DEVICE` = `Samsung Galaxy S22 Ultra`, `BROWSERSTACK_OS_VERSION` = `12.0`,
+   `BROWSERSTACK_ANDROID_DEVICE` = `Samsung Galaxy S22 Ultra`,
+   `BROWSERSTACK_ANDROID_OS_VERSION` = `12.0`,
    `BROWSERSTACK_IOS_DEVICE` = `iPhone 14`, `BROWSERSTACK_IOS_OS_VERSION` = `16`.
 3. **Source Code Management → Git**: `https://github.com/Dmitry5401/qa_guru_course_mobile`.
    В *Branches to build* указать нужную ветку — по умолчанию Jenkins возьмёт `master`, а тесты
@@ -95,8 +96,8 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 | `BROWSERSTACK_HUB` | `test.properties` | `https://hub.browserstack.com/wd/hub` |
 | `BROWSERSTACK_APPIUM_VERSION` | `test.properties` | `2.0.1` |
 | `BROWSERSTACK_APP_ID` | `test.properties` | `WikipediaSample` |
-| `BROWSERSTACK_DEVICE` | `test.properties` | `Samsung Galaxy S22 Ultra` |
-| `BROWSERSTACK_OS_VERSION` | `test.properties` | `12.0` |
+| `BROWSERSTACK_ANDROID_DEVICE` | `test.properties` | `Samsung Galaxy S22 Ultra` |
+| `BROWSERSTACK_ANDROID_OS_VERSION` | `test.properties` | `12.0` |
 | `BROWSERSTACK_IOS_APP_ID` | `test.properties` | `BStackSampleApp` |
 | `BROWSERSTACK_IOS_DEVICE` | `test.properties` | `iPhone 14` |
 | `BROWSERSTACK_IOS_OS_VERSION` | `test.properties` | `16` |
@@ -113,7 +114,7 @@ status      done
 ```
 
 Если понадобится передать настройку флагом, а не переменной окружения, работает
-`-DBROWSERSTACK_DEVICE=...`. За это отвечает строка в `build.gradle`:
+`-DBROWSERSTACK_ANDROID_DEVICE=...`. За это отвечает строка в `build.gradle`:
 
 ```groovy
 systemProperties(System.getProperties())

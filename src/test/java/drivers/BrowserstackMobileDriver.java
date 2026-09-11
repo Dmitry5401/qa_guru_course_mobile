@@ -26,8 +26,8 @@ public class BrowserstackMobileDriver implements WebDriverProvider {
         browserstackOptions.put("userName", auth.user());
         browserstackOptions.put("accessKey", auth.accessKey());
         browserstackOptions.put("appiumVersion", testConfig.appiumVersion());
-        browserstackOptions.put("deviceName", testConfig.device());
-        browserstackOptions.put("osVersion", testConfig.osVersion());
+        browserstackOptions.put("deviceName", testConfig.androidDevice());
+        browserstackOptions.put("osVersion", testConfig.androidOsVersion());
         browserstackOptions.put("projectName", "First Java Project");
         browserstackOptions.put("buildName", "browserstack-build-1");
         browserstackOptions.put("sessionName", "first_test");
