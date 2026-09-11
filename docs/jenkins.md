@@ -34,8 +34,8 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 ## Вариант 1: Freestyle job
 
 1. **New Item → Freestyle project**.
-2. **This project is parameterised**, добавить строковые параметры. Имена свободные, важно лишь
-   совпадение с ключами в шаге сборки:
+2. **This project is parameterised**, добавить строковые параметры. Имена обязаны совпадать
+   с ключами в `test.properties`, иначе Owner их не подхватит:
    `BROWSERSTACK_DEVICE` = `Samsung Galaxy S22 Ultra`, `BROWSERSTACK_OS_VERSION` = `12.0`,
    `BROWSERSTACK_IOS_DEVICE` = `iPhone 14`, `BROWSERSTACK_IOS_OS_VERSION` = `16`.
 3. **Source Code Management → Git**: `https://github.com/Dmitry5401/qa_guru_course_mobile`.
@@ -44,12 +44,11 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 4. **Build Steps → Execute shell**:
 
 ```bash
-./gradlew clean test \
-    -Dbrowserstack.device="$BROWSERSTACK_DEVICE" \
-    -Dbrowserstack.osVersion="$BROWSERSTACK_OS_VERSION" \
-    -Dbrowserstack.ios.device="$BROWSERSTACK_IOS_DEVICE" \
-    -Dbrowserstack.ios.osVersion="$BROWSERSTACK_IOS_OS_VERSION"
+./gradlew clean test
 ```
+
+Пробрасывать параметры флагами не нужно: Jenkins отдаёт их шагу как переменные окружения,
+а Owner читает их из источника `system:env`.
 
 5. **Post-build Actions → Allure Report**, в *Results* указать путь `build/allure-results`.
 
@@ -67,52 +66,75 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 
 ## Как параметры доезжают до тестов
 
-Цепочка такая: параметр джоба → `-D` в команде → `BrowserstackConfig`.
+Настройки читает библиотека Owner. Интерфейсов два: `config/AuthConfig` — доступы,
+`config/TestConfig` — всё остальное. У каждого три источника:
 
-Промежуточное звено легко потерять — это строка в `build.gradle`:
-
-```groovy
-systemProperties(System.getProperties())
+```java
+@Config.LoadPolicy(Config.LoadType.MERGE)
+@Config.Sources({
+    "system:properties",
+    "system:env",
+    "classpath:test.properties"
+})
 ```
 
-Без неё `-D` останутся в JVM демона Gradle и до тестовой JVM не дойдут.
+Приоритет задаётся порядком в списке: системное свойство важнее переменной окружения,
+а она важнее файла.
 
-`BrowserstackConfig` читает значения по приоритету: системное свойство важнее переменной
-окружения, а она важнее константы в коде. Полный список ключей:
+`LoadType.MERGE` здесь обязателен. По умолчанию Owner работает в режиме `FIRST`: берёт первый
+источник, который удалось открыть, и остальные не смотрит. `system:properties` открывается
+всегда, поэтому без `MERGE` файл просто не читался бы.
 
-| Свойство | Переменная окружения | Значение по умолчанию |
+Ключи названы как переменные окружения, чтобы одно и то же имя работало во всех трёх
+источниках. Полный список — это и есть содержимое двух файлов:
+
+| Ключ | Файл | Значение |
 | --- | --- | --- |
-| `browserstack.user` | `BROWSERSTACK_USERNAME` | из кода |
-| `browserstack.key` | `BROWSERSTACK_ACCESS_KEY` | из кода |
-| `browserstack.app` | `BROWSERSTACK_APP_ID` | `WikipediaSample` |
-| `browserstack.device` | `BROWSERSTACK_DEVICE` | `Samsung Galaxy S22 Ultra` |
-| `browserstack.osVersion` | `BROWSERSTACK_OS_VERSION` | `12.0` |
-| `browserstack.ios.app` | `BROWSERSTACK_IOS_APP_ID` | `BStackSampleApp` |
-| `browserstack.ios.device` | `BROWSERSTACK_IOS_DEVICE` | `iPhone 14` |
-| `browserstack.ios.osVersion` | `BROWSERSTACK_IOS_OS_VERSION` | `16` |
-| `browserstack.appiumVersion` | `BROWSERSTACK_APPIUM_VERSION` | `2.0.1` |
-| `browserstack.hub` | `BROWSERSTACK_HUB` | `https://hub.browserstack.com/wd/hub` |
+| `BROWSERSTACK_USERNAME` | `auth.properties` | логин аккаунта |
+| `BROWSERSTACK_ACCESS_KEY` | `auth.properties` | ключ аккаунта |
+| `BROWSERSTACK_HUB` | `test.properties` | `https://hub.browserstack.com/wd/hub` |
+| `BROWSERSTACK_APPIUM_VERSION` | `test.properties` | `2.0.1` |
+| `BROWSERSTACK_APP_ID` | `test.properties` | `WikipediaSample` |
+| `BROWSERSTACK_DEVICE` | `test.properties` | `Samsung Galaxy S22 Ultra` |
+| `BROWSERSTACK_OS_VERSION` | `test.properties` | `12.0` |
+| `BROWSERSTACK_IOS_APP_ID` | `test.properties` | `BStackSampleApp` |
+| `BROWSERSTACK_IOS_DEVICE` | `test.properties` | `iPhone 14` |
+| `BROWSERSTACK_IOS_OS_VERSION` | `test.properties` | `16` |
 
-Проверка, что связка работает: прогон с `-Dbrowserstack.ios.device='iPhone 14 Pro'` при значении
-`iPhone 14` в конфиге дал сессию на переопределённом устройстве.
+Проверка, что связка работает: прогон с переменной окружения
+`BROWSERSTACK_IOS_DEVICE="iPhone 14 Pro"` при значении `iPhone 14` в `test.properties` дал
+сессию на переопределённом устройстве. Ровно этим путём идут параметры джоба.
 
 ```
-GET https://api.browserstack.com/app-automate/sessions/7a6a26e4...1b46.json
+GET https://api.browserstack.com/app-automate/sessions/be81ebae...138d.json
 device      iPhone 14 Pro
 os_version  16.3
 status      done
 ```
 
+Если понадобится передать настройку флагом, а не переменной окружения, работает
+`-DBROWSERSTACK_DEVICE=...`. За это отвечает строка в `build.gradle`:
+
+```groovy
+systemProperties(System.getProperties())
+```
+
+Без неё `-D` остались бы в JVM демона Gradle и до тестовой JVM не дошли.
+
+Одна особенность источника `system:env`: пустая строка — это тоже значение. Если в джобе
+очистить строковый параметр, в тесты уйдёт пустое устройство, а не значение из файла.
+Падает это сразу и заметно, на создании сессии.
+
 ## Ключ доступа
 
-Сейчас username и access key лежат в коде константами, поэтому джоб заводится без настройки —
-это удобно для учебного репозитория, но ключ виден всем.
+Логин и ключ лежат в `src/test/resources/auth.properties`, поэтому джоб заводится без
+настройки — это удобно для учебного репозитория, но ключ виден всем, у кого есть доступ к коду.
 
-Менять код для перехода на секреты не нужно: `BrowserstackConfig` уже читает переменные
-окружения, а Jenkins умеет их подставлять. Достаточно завести **Credentials** типа
-*Username with password* и в джобе включить **Use secret text(s) or file(s)** →
-*Username and password (separated)* с именами переменных `BROWSERSTACK_USERNAME` и
-`BROWSERSTACK_ACCESS_KEY`. Значения из окружения перебьют константы.
+Менять код для перехода на секреты не нужно: те же имена читаются из окружения, а Jenkins умеет
+их подставлять. Достаточно завести **Credentials** типа *Username with password* и в джобе
+включить **Use secret text(s) or file(s)** → *Username and password (separated)* с именами
+переменных `BROWSERSTACK_USERNAME` и `BROWSERSTACK_ACCESS_KEY`. Значения из окружения перебьют
+файл. Сам `auth.properties` в этом случае можно добавить в `.gitignore`.
 
 Передавать ключ через `-D` в шаге сборки не стоит: аргументы командной строки видны в логе
 консоли и в списке процессов агента.

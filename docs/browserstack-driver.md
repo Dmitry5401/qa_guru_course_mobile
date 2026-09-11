@@ -41,13 +41,13 @@ capability были плоские (`browserstack.user`, `device`, `os_version`)
 
 ```java
 Map<String, Object> browserstackOptions = new HashMap<>();
-browserstackOptions.put("userName", BrowserstackConfig.user());
-browserstackOptions.put("accessKey", BrowserstackConfig.accessKey());
-browserstackOptions.put("deviceName", BrowserstackConfig.device());
-browserstackOptions.put("osVersion", BrowserstackConfig.osVersion());
+browserstackOptions.put("userName", auth.user());
+browserstackOptions.put("accessKey", auth.accessKey());
+browserstackOptions.put("deviceName", testConfig.device());
+browserstackOptions.put("osVersion", testConfig.osVersion());
 
 UiAutomator2Options options = new UiAutomator2Options();
-options.setApp(BrowserstackConfig.app());
+options.setApp(testConfig.app());
 options.setCapability("bstack:options", browserstackOptions);
 ```
 
@@ -130,11 +130,12 @@ defineCommand("getPageSource",       get("/session/:sessionId/source"));
 
 ## 3. Настройки в конфиге, а не в драйвере
 
-Логин, ключ, `app`, устройство, версия ОС, версия Appium и адрес хаба лежат константами
-в `config/BrowserstackConfig`, но каждое значение переопределяется системным свойством
-(`-Dbrowserstack.app=...`) или переменной окружения (`BROWSERSTACK_APP_ID` и т.д.).
-`./gradlew test` работает без флагов, при этом ключ можно не держать в коде, а устройство —
-менять на запуск, не правя драйвер.
+Логин и ключ лежат в `src/test/resources/auth.properties`, остальное — в `test.properties`,
+а читает их библиотека Owner через интерфейсы `config/AuthConfig` и `config/TestConfig`.
+Любое значение переопределяется переменной окружения или системным свойством с тем же именем
+(`BROWSERSTACK_APP_ID`, `-DBROWSERSTACK_APP_ID=...`). `./gradlew test` работает без флагов,
+при этом ключ можно не держать в репозитории, а устройство — менять на запуск, не правя драйвер.
+Подробнее про источники и их приоритет — в `jenkins.md`.
 
 Отдельно про `app`. `app_url` действителен только внутри своего аккаунта: `bs://<hash>`,
 скопированный из чужого примера, всегда даст `BROWSERSTACK_INVALID_APP_CAP`. Именно на это

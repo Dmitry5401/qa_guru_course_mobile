@@ -38,16 +38,10 @@ pipeline {
     stages {
         stage('Tests') {
             steps {
-                // Устройства и версии ОС читает BrowserstackConfig: системное свойство
-                // важнее переменной окружения, а она важнее константы в коде
-                sh """
-                    ./gradlew clean test \
-                        ${params.TESTS ? "--tests '${params.TESTS}'" : ''} \
-                        -Dbrowserstack.device='${params.BROWSERSTACK_DEVICE}' \
-                        -Dbrowserstack.osVersion='${params.BROWSERSTACK_OS_VERSION}' \
-                        -Dbrowserstack.ios.device='${params.BROWSERSTACK_IOS_DEVICE}' \
-                        -Dbrowserstack.ios.osVersion='${params.BROWSERSTACK_IOS_OS_VERSION}'
-                """
+                // Параметры джоба Jenkins отдаёт шагу как переменные окружения, а Owner
+                // читает их из source system:env — поэтому пробрасывать их через -D не нужно.
+                // Имена параметров выше обязаны совпадать с ключами в test.properties.
+                sh "./gradlew clean test ${params.TESTS ? "--tests '${params.TESTS}'" : ''}"
             }
         }
     }
