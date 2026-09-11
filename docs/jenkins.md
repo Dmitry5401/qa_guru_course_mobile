@@ -39,6 +39,9 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
    `BROWSERSTACK_ANDROID_DEVICE` = `Samsung Galaxy S22 Ultra`,
    `BROWSERSTACK_ANDROID_OS_VERSION` = `12.0`,
    `BROWSERSTACK_IOS_DEVICE` = `iPhone 14`, `BROWSERSTACK_IOS_OS_VERSION` = `16`.
+   Параметром можно сделать любой ключ из таблицы ниже, эти четыре — просто самые нужные.
+   Версию Android при этом стоит держать около `12.0`: приложение 2017 года на современном
+   Android не работает, подробности в `browserstack-driver.md`, раздел 6.
 3. **Source Code Management → Git**: `https://github.com/Dmitry5401/qa_guru_course_mobile`.
    В *Branches to build* указать нужную ветку — по умолчанию Jenkins возьмёт `master`, а тесты
    могут лежать в другой.
