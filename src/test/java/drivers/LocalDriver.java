@@ -56,9 +56,14 @@ public class LocalDriver implements WebDriverProvider {
                 .setAppPackage(localConfig.appPackage())
                 .setAppActivity(localConfig.appActivity());
 
-        // deviceName Appium при выборе устройства игнорирует: сначала смотрит udid,
-        // затем platformVersion, иначе берёт первое устройство из adb devices.
-        if (!localConfig.deviceUdid().isBlank()) {
+        // deviceName Appium при выборе устройства игнорирует. Порядок такой: avd, затем
+        // udid, затем platformVersion, иначе первое устройство из adb devices.
+        // avd удобен для эмулятора: имя из Device Manager стабильно, а номер порта
+        // в emulator-5554 зависит от порядка запуска. Вдобавок Appium сам поднимет
+        // эмулятор с таким именем, если тот ещё не запущен.
+        if (!localConfig.avd().isBlank()) {
+            options.setAvd(localConfig.avd());
+        } else if (!localConfig.deviceUdid().isBlank()) {
             options.setUdid(localConfig.deviceUdid());
         } else if (!localConfig.platformVersion().isBlank()) {
             options.setPlatformVersion(localConfig.platformVersion());

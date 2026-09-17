@@ -12,10 +12,12 @@ import org.aeonbits.owner.Config;
  * убрать: у Appium 2 и 3 базовый путь по умолчанию корневой, {@code /wd/hub} остался
  * в Appium 1. Расхождение ловит проверка в {@link drivers.LocalDriver} до создания сессии.
  * <p>
- * Устройство Appium выбирает по {@code udid}: если он не задан, в дело идёт
- * {@code platformVersion}, а если и его нет — первое устройство из {@code adb devices}.
- * Когда эмулятор и телефон подключены одновременно, udid — единственный надёжный способ
- * попасть в нужное; список серийников показывает {@code adb devices}.
+ * Устройство Appium выбирает по {@code avd}, затем по {@code udid}, затем
+ * по {@code platformVersion}, а если ничего не задано — берёт первое устройство
+ * из {@code adb devices}. Когда эмулятор и телефон подключены одновременно, это
+ * единственный надёжный способ попасть в нужное: для эмулятора удобнее
+ * {@code LOCAL_AVD} (имя из Device Manager), для телефона — {@code LOCAL_DEVICE_UDID}
+ * (серийник из {@code adb devices}).
  */
 @Config.LoadPolicy(Config.LoadType.MERGE)
 @Config.Sources({
@@ -28,6 +30,10 @@ public interface LocalConfig extends Config {
     @Key("LOCAL_APPIUM_URL")
     @DefaultValue("http://localhost:4723/wd/hub")
     String appiumUrl();
+
+    @Key("LOCAL_AVD")
+    @DefaultValue("")
+    String avd();
 
     @Key("LOCAL_DEVICE_UDID")
     @DefaultValue("")
