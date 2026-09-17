@@ -43,8 +43,8 @@ Gradle по умолчанию печатал только `SessionNotCreatedExc
 и текст ошибки виден прямо в консоли. Полный отчёт с page source и скриншотом всё так же
 лежит в `build/reports/tests/test/index.html`.
 
-Перед созданием сессии `LocalDriver` дёргает `<LOCAL_APPIUM_URL>status` и на два самых частых
-случая отвечает по-человечески: сервер не запущен и адрес с лишним `/wd/hub`.
+Перед созданием сессии `LocalDriver` дёргает `<LOCAL_APPIUM_URL>status` и на частые случаи
+отвечает по-человечески: сервер не запущен либо базовый путь не совпал с конфигом.
 
 ### Как читать `SessionNotCreatedException`
 
@@ -60,6 +60,7 @@ Gradle по умолчанию печатал только `SessionNotCreatedExc
 | Текст в `Original error` | Причина |
 | --- | --- |
 | `Could not find a driver for automationName 'UiAutomator2'` | драйвер не установлен — см. про пару версий выше |
+| `Response code 404` сразу, без ожидания | базовый путь сервера не совпал с `LOCAL_APPIUM_URL` |
 | `Neither ANDROID_HOME nor ANDROID_SDK_ROOT environment variable was exported` | Appium не видит Android SDK, нужна переменная `ANDROID_HOME` |
 | `Could not find a connected Android device in 20000ms` | в `adb devices` нет устройства в состоянии `device` |
 | `Unable to find an active device or emulator with OS ...` | `LOCAL_PLATFORM_VERSION` не совпала ни с одним устройством |
@@ -88,8 +89,33 @@ $ curl -s http://localhost:4723/wd/hub/status
 [HTTP] <-- POST /wd/hub/session 404 3 ms - 211
 ```
 
-Адрес задаётся ключом `LOCAL_APPIUM_URL`, по умолчанию `http://localhost:4723/`. Если очень нужен
-старый путь, Appium умеет его вернуть: `appium --base-path /wd/hub`.
+Адрес задаётся ключом `LOCAL_APPIUM_URL`, по умолчанию `http://localhost:4723/`, и сервер под него
+поднимается просто командой `appium`, без флагов.
+
+Вернуть старый путь на сервере Appium тоже умеет — `appium server --base-path /wd/hub`, — но тогда
+`LOCAL_APPIUM_URL` придётся править на `http://localhost:4723/wd/hub`. Иначе получится то же
+расхождение, только зеркальное: запрос уйдёт в корень, сервер отдаст 404 за 14 миллисекунд, и
+тест снова упадёт с `SessionNotCreatedException`. Флаг в этом проекте не нужен ни для чего, так
+что проще запускать `appium` как есть.
+
+Сверить, где сервер на самом деле слушает, можно по его собственному стартовому логу — он прямо
+печатает готовые адреса:
+
+```
+[Appium] Appium REST http interface listener started on http://0.0.0.0:4723/wd/hub
+[Appium] You can provide the following URLs in your client code to connect to this server:
+        http://127.0.0.1:4723/wd/hub (only accessible from the same host)
+```
+
+Если базовый путь и `LOCAL_APPIUM_URL` разъехались, проверка в `LocalDriver` пробует оба варианта
+и называет рабочий адрес:
+
+```
+java.lang.IllegalStateException: Appium слушает http://localhost:4723/wd/hub,
+а LOCAL_APPIUM_URL указывает на http://localhost:4723. Либо поставьте
+LOCAL_APPIUM_URL=http://localhost:4723/wd/hub/, либо перезапустите сервер
+с другим --base-path.
+```
 
 ### 2. Устройство выбирается по `udid`, а не по `deviceName`
 

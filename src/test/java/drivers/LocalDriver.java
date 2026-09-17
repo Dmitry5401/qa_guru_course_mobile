@@ -70,31 +70,55 @@ public class LocalDriver implements WebDriverProvider {
         }
     }
 
+    private static final String LEGACY_BASE_PATH = "/wd/hub";
+
+    private enum Probe { OK, NO_ROUTE, UNREACHABLE }
+
     private void checkAppiumIsReachable(URL appiumUrl) {
-        URI status = URI.create(appiumUrl.toString().replaceAll("/+$", "") + "/status");
-        HttpRequest request = HttpRequest.newBuilder(status)
+        String base = appiumUrl.toString().replaceAll("/+$", "");
+        Probe probe = probeStatus(base);
+        if (probe == Probe.OK) {
+            return;
+        }
+        if (probe == Probe.UNREACHABLE) {
+            throw new IllegalStateException("Appium не отвечает на " + base + "/status."
+                    + " Запустите сервер командой `appium` и сверьте адрес в LOCAL_APPIUM_URL.");
+        }
+
+        // Роут не найден. Чаще всего базовый путь сервера и LOCAL_APPIUM_URL просто
+        // разъехались, поэтому проверяем второй вариант и называем рабочий адрес.
+        String alternative = base.endsWith(LEGACY_BASE_PATH)
+                ? base.substring(0, base.length() - LEGACY_BASE_PATH.length())
+                : base + LEGACY_BASE_PATH;
+
+        if (probeStatus(alternative) == Probe.OK) {
+            throw new IllegalStateException("Appium слушает " + alternative
+                    + ", а LOCAL_APPIUM_URL указывает на " + base + "."
+                    + " Либо поставьте LOCAL_APPIUM_URL=" + alternative + "/,"
+                    + " либо перезапустите сервер с другим --base-path."
+                    + " У Appium 2 и 3 базовый путь по умолчанию — корень,"
+                    + " префикс " + LEGACY_BASE_PATH + " остался в Appium 1.");
+        }
+
+        throw new IllegalStateException("Appium отвечает, но роута /status нет ни на " + base
+                + ", ни на " + alternative + ". Проверьте --base-path, с которым запущен сервер.");
+    }
+
+    private Probe probeStatus(String base) {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(base + "/status"))
                 .timeout(Duration.ofSeconds(10))
                 .GET()
                 .build();
-
-        int code;
         try {
-            code = HttpClient.newHttpClient()
+            int code = HttpClient.newHttpClient()
                     .send(request, HttpResponse.BodyHandlers.discarding())
                     .statusCode();
+            return code == 404 ? Probe.NO_ROUTE : Probe.OK;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Прервана проверка Appium на " + status, e);
+            throw new IllegalStateException("Прервана проверка Appium на " + base, e);
         } catch (IOException e) {
-            throw new IllegalStateException("Appium не отвечает на " + status
-                    + ". Запустите сервер командой `appium` и сверьте адрес в LOCAL_APPIUM_URL.", e);
-        }
-
-        if (code == 404) {
-            throw new IllegalStateException("Appium отвечает, но роута " + status + " у него нет."
-                    + " У Appium 2 базовый путь — корень, префикс /wd/hub остался в Appium 1:"
-                    + " уберите его из LOCAL_APPIUM_URL либо запустите сервер"
-                    + " командой `appium --base-path /wd/hub`.");
+            return Probe.UNREACHABLE;
         }
     }
 
