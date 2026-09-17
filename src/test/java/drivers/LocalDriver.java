@@ -14,6 +14,10 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 
 import static config.Project.localConfig;
 import static io.appium.java_client.remote.AutomationName.ANDROID_UIAUTOMATOR2;
@@ -33,6 +37,11 @@ public class LocalDriver implements WebDriverProvider {
     @Nonnull
     @Override
     public WebDriver createDriver(@Nonnull Capabilities capabilities) {
+        URL appiumUrl = getAppiumServerUrl();
+        // Проверяем сервер до скачивания APK: SessionNotCreatedException про недоступный
+        // адрес читается плохо, а ждать загрузки приложения ради него совсем ни к чему.
+        checkAppiumIsReachable(appiumUrl);
+
         UiAutomator2Options options = new UiAutomator2Options();
         options.merge(capabilities);
 
@@ -50,7 +59,7 @@ public class LocalDriver implements WebDriverProvider {
             options.setPlatformVersion(localConfig.platformVersion());
         }
 
-        return new AndroidDriver(getAppiumServerUrl(), options);
+        return new AndroidDriver(appiumUrl, options);
     }
 
     public static URL getAppiumServerUrl() {
@@ -58,6 +67,34 @@ public class LocalDriver implements WebDriverProvider {
             return URI.create(localConfig.appiumUrl()).toURL();
         } catch (MalformedURLException e) {
             throw new IllegalStateException("Некорректный адрес Appium: " + localConfig.appiumUrl(), e);
+        }
+    }
+
+    private void checkAppiumIsReachable(URL appiumUrl) {
+        URI status = URI.create(appiumUrl.toString().replaceAll("/+$", "") + "/status");
+        HttpRequest request = HttpRequest.newBuilder(status)
+                .timeout(Duration.ofSeconds(10))
+                .GET()
+                .build();
+
+        int code;
+        try {
+            code = HttpClient.newHttpClient()
+                    .send(request, HttpResponse.BodyHandlers.discarding())
+                    .statusCode();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Прервана проверка Appium на " + status, e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Appium не отвечает на " + status
+                    + ". Запустите сервер командой `appium` и сверьте адрес в LOCAL_APPIUM_URL.", e);
+        }
+
+        if (code == 404) {
+            throw new IllegalStateException("Appium отвечает, но роута " + status + " у него нет."
+                    + " У Appium 2 базовый путь — корень, префикс /wd/hub остался в Appium 1:"
+                    + " уберите его из LOCAL_APPIUM_URL либо запустите сервер"
+                    + " командой `appium --base-path /wd/hub`.");
         }
     }
 

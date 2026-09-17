@@ -17,6 +17,21 @@ adb devices                 # эмулятор или телефон должн�
 Драйвер uiautomator2 версии 5 и выше требует Appium 3. Под Appium 2 ставится ветка 4.x:
 `appium driver install uiautomator2@4.2.3`.
 
+Ещё Appium нужен путь до Android SDK — переменная `ANDROID_HOME` (в Windows задаётся
+в свойствах системы, после чего терминал надо перезапустить). Без неё сессия падает
+с `Neither ANDROID_HOME nor ANDROID_SDK_ROOT environment variable was exported`.
+Проверить, что всё на месте, можно командой `appium driver doctor uiautomator2`.
+
+## Если тест падает, а причины не видно
+
+Gradle по умолчанию печатал только `SessionNotCreatedException at ProtocolHandshake.java:148`
+без самого сообщения — в `build.gradle` стоял `exceptionFormat "short"`. Теперь стоит `full`,
+и текст ошибки виден прямо в консоли. Полный отчёт с page source и скриншотом всё так же
+лежит в `build/reports/tests/test/index.html`.
+
+Перед созданием сессии `LocalDriver` дёргает `<LOCAL_APPIUM_URL>status` и на два самых частых
+случая отвечает по-человечески: сервер не запущен и адрес с лишним `/wd/hub`.
+
 ## Четыре грабли, на которые наступает локальный запуск
 
 ### 1. Базовый путь `/wd/hub` в Appium 2 больше не существует
