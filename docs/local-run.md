@@ -10,7 +10,7 @@ uiautomator2 4.2.3 и на Appium 3.7.0 с uiautomator2 8.7.0.
 ```bash
 npm install -g appium@2
 appium driver install uiautomator2
-appium                      # слушает http://localhost:4723/
+appium --base-path /wd/hub  # адрес должен совпадать с LOCAL_APPIUM_URL, см. грабли №1
 adb devices                 # эмулятор или телефон должны быть в списке как device
 ```
 
@@ -67,10 +67,10 @@ Gradle по умолчанию печатал только `SessionNotCreatedExc
 
 ## Грабли, на которые наступает локальный запуск
 
-### 1. Базовый путь `/wd/hub` в Appium 2 больше не существует
+### 1. Базовый путь сервера и `LOCAL_APPIUM_URL` должны совпадать
 
 Самая частая причина `SessionNotCreatedException` с кодом 404. В Appium 1 сервер слушал
-`/wd/hub`, в Appium 2 — корень, и старый адрес отдаёт «No route found»:
+`/wd/hub`, в Appium 2 и 3 — корень, и старый адрес на сервере без флагов отдаёт «No route found»:
 
 ```
 $ curl -s http://localhost:4723/status
@@ -89,14 +89,13 @@ $ curl -s http://localhost:4723/wd/hub/status
 [HTTP] <-- POST /wd/hub/session 404 3 ms - 211
 ```
 
-Адрес задаётся ключом `LOCAL_APPIUM_URL`, по умолчанию `http://localhost:4723/`, и сервер под него
-поднимается просто командой `appium`, без флагов.
+Адрес задаётся ключом `LOCAL_APPIUM_URL`. Сейчас в `local.properties` стоит
+`http://localhost:4723/wd/hub` — под сервер, поднятый как `appium --base-path /wd/hub`.
+Именно так его и надо запускать, иначе пути разъедутся.
 
-Вернуть старый путь на сервере Appium тоже умеет — `appium server --base-path /wd/hub`, — но тогда
-`LOCAL_APPIUM_URL` придётся править на `http://localhost:4723/wd/hub`. Иначе получится то же
-расхождение, только зеркальное: запрос уйдёт в корень, сервер отдаст 404 за 14 миллисекунд, и
-тест снова упадёт с `SessionNotCreatedException`. Флаг в этом проекте не нужен ни для чего, так
-что проще запускать `appium` как есть.
+Если запускать сервер просто командой `appium`, он слушает корень, и тогда суффикс из
+`LOCAL_APPIUM_URL` надо убрать. Работает любой из двух вариантов, важно лишь, чтобы обе стороны
+говорили об одном адресе.
 
 Сверить, где сервер на самом деле слушает, можно по его собственному стартовому логу — он прямо
 печатает готовые адреса:
@@ -117,8 +116,8 @@ put LOCAL_APPIUM_URL=http://localhost:4723/wd/hub/ into local.properties,
 or restart the server so it serves http://localhost:4723.
 ```
 
-Починить можно с любой стороны, и проще — со стороны сервера: остановить его и поднять обратно
-просто командой `appium`, без `--base-path`. Тогда конфиг в репозитории править не нужно.
+Починить можно с любой стороны: либо привести `LOCAL_APPIUM_URL` к адресу, который сервер
+действительно слушает, либо перезапустить сервер под адрес из конфига.
 
 ### 2. Устройство выбирается по `udid`, а не по `deviceName`
 
