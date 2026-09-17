@@ -21,7 +21,8 @@ def aspectjWeaverVersion = "1.9.22",
     junitVersion = "5.14.3",
     slf4jVersion = "2.0.17",
     appiumVersion = "8.3.0",
-    ownerVersion = "1.0.12"
+    ownerVersion = "1.0.12",
+    commonsIoVersion = "2.22.0"
 
 
 allure
@@ -53,6 +54,9 @@ dependencies {
     testImplementation("io.appium:java-client:$appiumVersion")
     testImplementation("io.rest-assured:rest-assured:$restAssuredVersion")
     testImplementation("org.aeonbits.owner:owner:$ownerVersion")
+    // FileUtils для LocalDriver. Selenide и java-client тянут commons-io сами, но только
+    // в runtime, поэтому компилятору он не виден и нужен явно
+    testImplementation("commons-io:commons-io:$commonsIoVersion")
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
 }
 
