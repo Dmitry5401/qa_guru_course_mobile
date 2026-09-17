@@ -32,6 +32,24 @@ Gradle по умолчанию печатал только `SessionNotCreatedExc
 Перед созданием сессии `LocalDriver` дёргает `<LOCAL_APPIUM_URL>status` и на два самых частых
 случая отвечает по-человечески: сервер не запущен и адрес с лишним `/wd/hub`.
 
+### Как читать `SessionNotCreatedException`
+
+Строка стека сразу говорит, дошёл ли запрос до сервера:
+
+| Где упало | Что это значит |
+| --- | --- |
+| `RemoteWebDriver.java:561`, «Possible causes are invalid address of the remote server» | до Appium не дозвонились: сервер не запущен или порт не тот |
+| `ProtocolHandshake.java:148`, «Response code ...» | Appium ответил и отказал, дальше смотрим текст ответа |
+
+Частые отказы самого Appium:
+
+| Текст в `Original error` | Причина |
+| --- | --- |
+| `Could not find a driver for automationName 'UiAutomator2'` | драйвер не установлен: `appium driver install uiautomator2@4.2.3` |
+| `Neither ANDROID_HOME nor ANDROID_SDK_ROOT environment variable was exported` | Appium не видит Android SDK, нужна переменная `ANDROID_HOME` |
+| `Could not find a connected Android device in 20000ms` | в `adb devices` нет устройства в состоянии `device` |
+| `Unable to find an active device or emulator with OS ...` | `LOCAL_PLATFORM_VERSION` не совпала ни с одним устройством |
+
 ## Четыре грабли, на которые наступает локальный запуск
 
 ### 1. Базовый путь `/wd/hub` в Appium 2 больше не существует
