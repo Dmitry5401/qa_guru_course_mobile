@@ -26,4 +26,5 @@ public class SearchTests extends TestBase {
         step("Verify content found", () ->
                 $$(id("org.wikipedia:id/page_list_item_title")).shouldHave(sizeGreaterThan(0)));
     }
+
 }
