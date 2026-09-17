@@ -65,7 +65,11 @@ tasks.withType(Test) {
     testLogging {
         lifecycle {
             events "started", "skipped", "failed", "standard_error", "standard_out"
-            exceptionFormat "short"
+            // short печатает только "SessionNotCreatedException at ProtocolHandshake.java:148"
+            // и прячет само сообщение, а у мобильных падений вся суть именно в нём
+            exceptionFormat "full"
+            showCauses true
+            showStackTraces true
         }
     }
 }
