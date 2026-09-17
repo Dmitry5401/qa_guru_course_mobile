@@ -23,7 +23,7 @@ import org.aeonbits.owner.Config;
 public interface LocalConfig extends Config {
 
     @Key("LOCAL_APPIUM_URL")
-    @DefaultValue("http://localhost:4723/wd")
+    @DefaultValue("http://localhost:4723/wd/hub")
     String appiumUrl();
 
     @Key("LOCAL_DEVICE_UDID")
