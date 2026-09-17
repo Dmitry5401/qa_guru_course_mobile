@@ -58,6 +58,12 @@ dependencies {
     testImplementation("commons-io:commons-io:$commonsIoVersion")
 }
 
+tasks.withType(JavaCompile) {
+    // javac читает исходники в кодировке платформы, а на Windows это может быть cp1251.
+    // Без явного UTF-8 русские имена шагов Allure поедут в отчёте ещё при компиляции.
+    options.encoding = 'UTF-8'
+}
+
 tasks.withType(Test) {
     useJUnitPlatform()
     systemProperties(System.getProperties())

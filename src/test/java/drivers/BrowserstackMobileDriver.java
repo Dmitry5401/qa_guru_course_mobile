@@ -41,7 +41,7 @@ public class BrowserstackMobileDriver implements WebDriverProvider {
         try {
             return new AndroidDriver(URI.create(testConfig.hubUrl()).toURL(), options);
         } catch (MalformedURLException e) {
-            throw new IllegalStateException("Некорректный адрес хаба: " + testConfig.hubUrl(), e);
+            throw new IllegalStateException("Malformed hub URL: " + testConfig.hubUrl(), e);
         }
     }
 }

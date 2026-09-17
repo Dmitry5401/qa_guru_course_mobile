@@ -65,7 +65,7 @@ Gradle по умолчанию печатал только `SessionNotCreatedExc
 | `Could not find a connected Android device in 20000ms` | в `adb devices` нет устройства в состоянии `device` |
 | `Unable to find an active device or emulator with OS ...` | `LOCAL_PLATFORM_VERSION` не совпала ни с одним устройством |
 
-## Четыре грабли, на которые наступает локальный запуск
+## Грабли, на которые наступает локальный запуск
 
 ### 1. Базовый путь `/wd/hub` в Appium 2 больше не существует
 
@@ -111,11 +111,14 @@ $ curl -s http://localhost:4723/wd/hub/status
 и называет рабочий адрес:
 
 ```
-java.lang.IllegalStateException: Appium слушает http://localhost:4723/wd/hub,
-а LOCAL_APPIUM_URL указывает на http://localhost:4723. Либо поставьте
-LOCAL_APPIUM_URL=http://localhost:4723/wd/hub/, либо перезапустите сервер
-с другим --base-path.
+java.lang.IllegalStateException: Appium listens at http://localhost:4723/wd/hub,
+but LOCAL_APPIUM_URL points to http://localhost:4723. Fix either side:
+put LOCAL_APPIUM_URL=http://localhost:4723/wd/hub/ into local.properties,
+or restart the server so it serves http://localhost:4723.
 ```
+
+Починить можно с любой стороны, и проще — со стороны сервера: остановить его и поднять обратно
+просто командой `appium`, без `--base-path`. Тогда конфиг в репозитории править не нужно.
 
 ### 2. Устройство выбирается по `udid`, а не по `deviceName`
 
@@ -165,6 +168,37 @@ java.io.IOException: Server returned HTTP response code: 403
 Скачанный APK лежит в `apps/` — не в `build/`, чтобы `clean` не стирал его, и не в ресурсах,
 чтобы `processTestResources` не копировал 17 МБ на каждую сборку. Каталог в `.gitignore`.
 
+### 5. Русский текст в консоли Windows превращается в мусор
+
+Сообщения проверки Appium сначала были на русском, и на русской Windows читались так:
+
+```
+java.lang.IllegalStateException: Appium ╤Б╨╗╤Г╤И╨░╨╡╤В http://localhost:4723/wd/hub,
+╨░ LOCAL_APPIUM_URL ╤Г╨║╨░╨╖╤Л╨▓╨░╨╡╤В ╨╜╨░ http://localhost:4723.
+```
+
+Это UTF-8, прочитанный как кодовая страница OEM 866 — она по умолчанию стоит в консоли русской
+Windows. Проверяется в одну строку: `"слушает".encode("utf-8").decode("cp866")` даёт ровно
+`╤Б╨╗╤Г╤И╨░╨╡╤В`. Gradle отдаёт текст исключения в UTF-8, не спрашивая кодовую страницу
+терминала, так что настройками сборки это не лечится — только настройкой самой консоли
+(`chcp 65001`), а требовать её от каждого, кто клонирует репозиторий, не хочется.
+
+Поэтому тексты исключений в драйверах теперь на английском: ASCII читается одинаково в любой
+кодировке — в `cmd`, Git Bash, IDE и в логе CI. Комментарии в коде и шаги Allure остались
+русскими: их читают в IDE и в HTML-отчёте, где UTF-8 везде.
+
+Заодно в `build.gradle` зафиксирована кодировка исходников:
+
+```groovy
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+```
+
+Без этого javac читает файлы в кодировке платформы. На JDK 18+ по умолчанию это UTF-8 и всё
+совпадает случайно, а на JDK 17 под Windows — cp1251, и русские имена шагов Allure поехали бы
+в отчёте уже на компиляции.
+
 ## Онбординг
 
 Appium по умолчанию переустанавливает приложение перед сессией, поэтому онбординг встречает тест
@@ -182,6 +216,11 @@ $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click();
 ```bash
 ./gradlew test --tests "tests.local.*"
 ```
+
+Префикс `./` обязателен в Git Bash, PowerShell и любой другой оболочке, кроме `cmd`: только
+`cmd` ищет исполняемые файлы в текущем каталоге, остальные — нет. Без префикса получите
+`bash: gradlew: command not found`, хотя файл лежит рядом. В `cmd` работает короткое
+`gradlew test ...`, потому что там подхватывается `gradlew.bat`.
 
 Любой ключ из `local.properties` переопределяется через `-D`, потому что Owner читает
 `system:properties` первым:
