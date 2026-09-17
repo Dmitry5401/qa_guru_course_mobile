@@ -3,7 +3,7 @@
 Тесты в `src/test/java/tests/local` идут через `drivers/LocalDriver` на Appium, поднятый на своей
 машине. Документ фиксирует, обо что споткнулся первый вариант драйвера и почему настройки лежат
 в `local.properties`. Всё проверено 17 сентября 2026 года на Appium 2.19.0 с драйвером
-uiautomator2 4.2.3.
+uiautomator2 4.2.3 и на Appium 3.7.0 с uiautomator2 8.7.0.
 
 ## Что нужно на машине
 
@@ -14,13 +14,27 @@ appium                      # слушает http://localhost:4723/
 adb devices                 # эмулятор или телефон должны быть в списке как device
 ```
 
-Драйвер uiautomator2 версии 5 и выше требует Appium 3. Под Appium 2 ставится ветка 4.x:
-`appium driver install uiautomator2@4.2.3`.
+Версия драйвера и версия сервера связаны жёстко, и `appium driver list --installed` показывает
+только драйвер, поэтому пару стоит сверять: `uiautomator2` ветки 4.x требует Appium 2,
+а 5.x и выше — Appium 3. Поставить драйвер к чужой мажорной версии сервера Appium не даст.
+
+Обе пары с нашим стеком работают — проверял прогоном одного и того же теста: и
+Appium 2.19.0 с `uiautomator2@4.2.3`, и Appium 3.7.0 с `uiautomator2@8.7.0` принимают сессию
+от java-client 8.3.0 одинаково. Так что если у вас Appium 3 — понижать его незачем.
 
 Ещё Appium нужен путь до Android SDK — переменная `ANDROID_HOME` (в Windows задаётся
-в свойствах системы, после чего терминал надо перезапустить). Без неё сессия падает
-с `Neither ANDROID_HOME nor ANDROID_SDK_ROOT environment variable was exported`.
-Проверить, что всё на месте, можно командой `appium driver doctor uiautomator2`.
+в свойствах системы, после чего терминал надо перезапустить, иначе процесс её не унаследует).
+Без неё сессия падает мгновенно, за десятки миллисекунд:
+`Neither ANDROID_HOME nor ANDROID_SDK_ROOT environment variable was exported`.
+
+Проверить окружение целиком — `appium driver doctor uiautomator2`. Он же ловит незаданную
+`JAVA_HOME`, которая нужна драйверу для подписи приложения:
+
+```
+WARN Doctor  ✖ ANDROID_HOME environment variable is NOT set!
+WARN Doctor  ✖ adb, emulator could not be found because ANDROID_HOME is NOT set!
+WARN Doctor  ✖ JAVA_HOME environment variable is NOT set!
+```
 
 ## Если тест падает, а причины не видно
 
@@ -45,7 +59,7 @@ Gradle по умолчанию печатал только `SessionNotCreatedExc
 
 | Текст в `Original error` | Причина |
 | --- | --- |
-| `Could not find a driver for automationName 'UiAutomator2'` | драйвер не установлен: `appium driver install uiautomator2@4.2.3` |
+| `Could not find a driver for automationName 'UiAutomator2'` | драйвер не установлен — см. про пару версий выше |
 | `Neither ANDROID_HOME nor ANDROID_SDK_ROOT environment variable was exported` | Appium не видит Android SDK, нужна переменная `ANDROID_HOME` |
 | `Could not find a connected Android device in 20000ms` | в `adb devices` нет устройства в состоянии `device` |
 | `Unable to find an active device or emulator with OS ...` | `LOCAL_PLATFORM_VERSION` не совпала ни с одним устройством |
