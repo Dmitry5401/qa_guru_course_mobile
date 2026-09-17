@@ -9,6 +9,7 @@ public final class Project {
 
     public static final AuthConfig auth = ConfigFactory.create(AuthConfig.class);
     public static final TestConfig testConfig = ConfigFactory.create(TestConfig.class);
+    public static final LocalConfig localConfig = ConfigFactory.create(LocalConfig.class);
 
     private Project() {
     }
