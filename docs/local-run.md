@@ -183,6 +183,11 @@ $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click();
 ./gradlew test --tests "tests.local.*"
 ```
 
+Префикс `./` обязателен в Git Bash, PowerShell и любой другой оболочке, кроме `cmd`: только
+`cmd` ищет исполняемые файлы в текущем каталоге, остальные — нет. Без префикса получите
+`bash: gradlew: command not found`, хотя файл лежит рядом. В `cmd` работает короткое
+`gradlew test ...`, потому что там подхватывается `gradlew.bat`.
+
 Любой ключ из `local.properties` переопределяется через `-D`, потому что Owner читает
 `system:properties` первым:
 
