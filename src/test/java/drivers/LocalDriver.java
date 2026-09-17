@@ -26,8 +26,8 @@ public class LocalDriver implements WebDriverProvider {
 
         options.setAutomationName(ANDROID_UIAUTOMATOR2)
                 .setPlatformName(ANDROID)
-                .setPlatformVersion("14.0")
-                .setDeviceName("Pixel_3a_API_34_extension_level_7_arm64")
+                .setPlatformVersion("13.0")
+                .setDeviceName("R58R611HJWD")
                 .setApp(getAppPath())
                 .setAppPackage("org.wikipedia.alpha")
                 .setAppActivity("org.wikipedia.main.MainActivity");
