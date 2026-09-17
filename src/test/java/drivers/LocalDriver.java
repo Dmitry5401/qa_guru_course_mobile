@@ -28,6 +28,11 @@ import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
  * Создаёт для Selenide сессию на локальном Appium-сервере: эмулятор или телефон в adb.
  * Подключается через {@code Configuration.browser = LocalDriver.class.getName()}.
  * Настройки — в {@code local.properties}, см. {@link config.LocalConfig}.
+ * <p>
+ * Тексты исключений здесь на английском намеренно: Gradle печатает их в консоль в UTF-8,
+ * не спрашивая кодовую страницу терминала, и на русской Windows (OEM 866) русский текст
+ * превращается в «╤Б╨╗╤Г╤И╨░╨╡╤В». Комментарии и шаги Allure читаются в IDE и в отчёте,
+ * там с UTF-8 проблем нет, поэтому они остаются на русском.
  */
 public class LocalDriver implements WebDriverProvider {
 
@@ -66,7 +71,7 @@ public class LocalDriver implements WebDriverProvider {
         try {
             return URI.create(localConfig.appiumUrl()).toURL();
         } catch (MalformedURLException e) {
-            throw new IllegalStateException("Некорректный адрес Appium: " + localConfig.appiumUrl(), e);
+            throw new IllegalStateException("Malformed Appium URL: " + localConfig.appiumUrl(), e);
         }
     }
 
@@ -81,8 +86,8 @@ public class LocalDriver implements WebDriverProvider {
             return;
         }
         if (probe == Probe.UNREACHABLE) {
-            throw new IllegalStateException("Appium не отвечает на " + base + "/status."
-                    + " Запустите сервер командой `appium` и сверьте адрес в LOCAL_APPIUM_URL.");
+            throw new IllegalStateException("Appium does not answer at " + base + "/status."
+                    + " Start the server with `appium` and check LOCAL_APPIUM_URL.");
         }
 
         // Роут не найден. Чаще всего базовый путь сервера и LOCAL_APPIUM_URL просто
@@ -92,16 +97,16 @@ public class LocalDriver implements WebDriverProvider {
                 : base + LEGACY_BASE_PATH;
 
         if (probeStatus(alternative) == Probe.OK) {
-            throw new IllegalStateException("Appium слушает " + alternative
-                    + ", а LOCAL_APPIUM_URL указывает на " + base + "."
-                    + " Либо поставьте LOCAL_APPIUM_URL=" + alternative + "/,"
-                    + " либо перезапустите сервер с другим --base-path."
-                    + " У Appium 2 и 3 базовый путь по умолчанию — корень,"
-                    + " префикс " + LEGACY_BASE_PATH + " остался в Appium 1.");
+            throw new IllegalStateException("Appium listens at " + alternative
+                    + ", but LOCAL_APPIUM_URL points to " + base + "."
+                    + " Fix either side: put LOCAL_APPIUM_URL=" + alternative + "/"
+                    + " into local.properties, or restart the server so it serves " + base + "."
+                    + " Appium 2 and 3 serve the root path by default,"
+                    + " the " + LEGACY_BASE_PATH + " prefix is left over from Appium 1.");
         }
 
-        throw new IllegalStateException("Appium отвечает, но роута /status нет ни на " + base
-                + ", ни на " + alternative + ". Проверьте --base-path, с которым запущен сервер.");
+        throw new IllegalStateException("Appium answers, but there is no /status route at " + base
+                + " nor at " + alternative + ". Check the --base-path the server was started with.");
     }
 
     private Probe probeStatus(String base) {
@@ -116,7 +121,7 @@ public class LocalDriver implements WebDriverProvider {
             return code == 404 ? Probe.NO_ROUTE : Probe.OK;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Прервана проверка Appium на " + base, e);
+            throw new IllegalStateException("Interrupted while probing Appium at " + base, e);
         } catch (IOException e) {
             return Probe.UNREACHABLE;
         }
@@ -139,7 +144,7 @@ public class LocalDriver implements WebDriverProvider {
                     copyInputStreamToFile(in, app);
                 }
             } catch (IOException e) {
-                throw new AssertionError("Не удалось скачать приложение: " + appUrl, e);
+                throw new AssertionError("Failed to download the app: " + appUrl, e);
             }
         }
         return app.getAbsolutePath();
