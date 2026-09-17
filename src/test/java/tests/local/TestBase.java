@@ -16,7 +16,9 @@ public class TestBase {
     @BeforeAll
     static void beforeAll() {
         Configuration.browser = LocalDriver.class.getName();
+        // размер окна и таймаут загрузки страницы в нативном приложении не поддерживаются
         Configuration.browserSize = null;
+        Configuration.pageLoadTimeout = -1;
         Configuration.timeout = 30000;
     }
 
