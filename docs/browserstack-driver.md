@@ -6,6 +6,10 @@
 (Selenide 6.13.0, Selenium 4.8.3, java-client 8.3.0, приложения WikipediaSample для Android
 и Sample iOS для iOS).
 
+Android-приложение с тех пор заменено: вместо alpha-сборки 2017 года тесты работают
+со стабильной сборкой 2023 года, той же, что скачивают локальные стенды. Разделы 6 и 7
+рассказывают, почему пришлось это сделать. Про стенды — [stands.md](stands.md).
+
 ## С чего началось
 
 Тест падал на создании сессии:
@@ -130,8 +134,8 @@ defineCommand("getPageSource",       get("/session/:sessionId/source"));
 
 ## 3. Настройки в конфиге, а не в драйвере
 
-Логин и ключ лежат в `src/test/resources/auth.properties`, остальное — в `test.properties`,
-а читает их библиотека Owner через интерфейсы `config/AuthConfig` и `config/TestConfig`.
+Логин и ключ лежат в `src/test/resources/auth.properties`, остальное — в `browserstack.properties`,
+а читает их библиотека Owner через интерфейсы `config/AuthConfig` и `config/BrowserstackConfig`.
 Любое значение переопределяется переменной окружения или системным свойством с тем же именем
 (`BROWSERSTACK_ANDROID_APP_ID`, `-DBROWSERSTACK_ANDROID_APP_ID=...`). `./gradlew test` работает без флагов,
 при этом ключ можно не держать в репозитории, а устройство — менять на запуск, не правя драйвер.
@@ -145,7 +149,7 @@ defineCommand("getPageSource",       get("/session/:sessionId/source"));
 ```bash
 curl -u "USER:ACCESS_KEY" \
   -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
-  -F "file=@/path/to/app.apk" -F 'data={"custom_id": "WikipediaSample"}'
+  -F "file=@/path/to/app.apk" -F 'data={"custom_id": "WikipediaStable27"}'
 ```
 
 Проверить, что вообще загружено в аккаунт: `GET https://api-cloud.browserstack.com/app-automate/recent_apps`.
@@ -164,7 +168,7 @@ Configuration.pageLoadTimeout = -1;    // pageLoad UiAutomator2 не подде�
 запуске. Тест от этого не падает, но лог мусорится. В `WebDriverFactory` вызов пропускается,
 если значение отрицательное.
 
-Создание сессии вынесено в `drivers/BrowserstackMobileDriver` — реализацию `WebDriverProvider`,
+Создание сессии вынесено в `drivers/BrowserstackDriver` — реализацию `WebDriverProvider`,
 которую Selenide подключает через `Configuration.browser`. Тест при этом остаётся чистым:
 `open()`, `$`, `$$`, `closeWebDriver()`.
 
@@ -207,11 +211,14 @@ Caused by: org.openqa.selenium.NoSuchElementException
   AppiumBy.accessibilityId: Search Wikipedia
 ```
 
-WikipediaSample.apk собран в 2017 году, поэтому выбирать под него современный флагман нельзя.
-Проверено: на Google Pixel 6 с Android 12 тот же тест проходит. Так что устройство менять можно,
-но версию ОС стоит держать близкой к 12.0.
+WikipediaSample.apk собран в 2017 году, поэтому выбирать под него современный флагман нельзя:
+на Google Pixel 6 с Android 12 тот же тест проходит. Это и стало первой причиной сменить
+приложение — привязка к устаревающим версиям ОС рано или поздно упёрлась бы в тупик.
 
-## 7. Текст статей в этом приложении больше не грузится
+Со сборкой 2023 года (`WikipediaStable27`, `targetSdk 33`) потолка нет: проверено прогонами
+на Android 13 и на Android 17, вёрстка и локаторы одинаковые.
+
+## 7. Текст статей в alpha-сборке не грузился, и это решилось сменой приложения
 
 WikipediaSample.apk — сборка 2.5.194-alpha от 30 мая 2017 года, и содержимое статей она
 запрашивает через Mobile Content Service. Wikimedia его отключила:
@@ -221,20 +228,23 @@ GET https://en.m.wikipedia.org/api/rest_v1/page/mobile-sections/Selenide
 403 Mobile Content Service is decommissioned. See https://phabricator.wikimedia.org/T328036
 ```
 
-Поиск при этом работает — он идёт через другой API, `action=query&list=prefixsearch`, и лента
-на главном экране тоже наполняется. А вот на экране любой открытой статьи вместо текста всегда
-будет `org.wikipedia.alpha:id/page_error` с надписью `An error occurred` и кнопкой `GO BACK`.
+Поиск при этом работал — он идёт через другой API, `action=query&list=prefixsearch`, — а вот
+на экране любой открытой статьи вместо текста был `org.wikipedia.alpha:id/page_error`
+с надписью `An error occurred` и кнопкой `GO BACK`. Проверять в `ArticleTests` было нечего,
+кроме факта перехода на экран.
 
-Практический вывод для тестов: содержимое статьи проверять нечем, но переход на её экран
-проверяется надёжно. На экране статьи есть два узла, которых нет в результатах поиска:
+Теперь на всех стендах стоит сборка 2023 года, и статья открывается полностью. Проверка
+в `ArticleTests` стала прямой: экран статьи виден и это именно запрошенная статья.
 
-- заголовок в тулбаре — `//*[@resource-id='org.wikipedia.alpha:id/page_toolbar']/android.widget.TextView`
-  (своего resource-id у него нет);
-- действия статьи — `accessibilityId` `Table of Contents`, `Find in page`, `Share the article link`,
-  `Change language`, `Add this article to a reading list`.
+```java
+$(id("org.wikipedia:id/page_contents_container")).shouldBe(visible);
+$(xpath("//android.webkit.WebView[@text='Selenide']")).shouldBe(visible);
+```
 
-Именно на них построен `ArticleTests`. Если однажды приложение обновят до сборки с живым API,
-в тест можно будет добавить проверку самого текста.
+Заголовок ищется как `text` самого `WebView`: своего resource-id у него нет, а тулбар
+в этой сборке — только панель кнопок (`page_toolbar_button_search`, `page_toolbar_button_tabs`
+и прочие), заголовка в нём нет. Тело статьи рисует `WebView`, и её название приходит
+в дерево элементов как текст этого узла.
 
 ## 8. iOS: другой драйвер, другие локаторы, тот же подход
 

@@ -3,24 +3,28 @@ package config;
 import org.aeonbits.owner.Config;
 
 /**
- * Настройки прогона: адрес хаба, приложения и устройства.
- * Про {@code LoadType.MERGE} и имена ключей — см. {@link AuthConfig}.
+ * Стенд {@code -DdeviceHost=browserstack}: устройство в облаке App Automate.
+ * Логин и ключ лежат отдельно, в {@link AuthConfig}.
  * <p>
  * Приложение сначала нужно загрузить в App Automate и получить app_url:
  * <pre>
  * curl -u "USER:ACCESS_KEY" \
  *   -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
- *   -F "file=@/path/to/app.apk" -F 'data={"custom_id": "WikipediaSample"}'
+ *   -F "file=@/path/to/app.apk" -F 'data={"custom_id": "WikipediaStable27"}'
  * </pre>
  * В качестве приложения годится и {@code app_url} вида {@code bs://<hash>}, и custom_id.
+ * custom_id удобнее: он переживает повторную загрузку, а app_url каждый раз новый.
+ * <p>
+ * Настройки iOS живут здесь же: локального стенда для iOS в проекте нет, для него
+ * нужен macOS с Xcode, поэтому iOS-тесты всегда идут в облако.
  */
 @Config.LoadPolicy(Config.LoadType.MERGE)
 @Config.Sources({
     "system:properties",
     "system:env",
-    "classpath:test.properties"
+    "classpath:browserstack.properties"
 })
-public interface TestConfig extends Config {
+public interface BrowserstackConfig extends Config {
 
     @Key("BROWSERSTACK_HUB")
     String hubUrl();

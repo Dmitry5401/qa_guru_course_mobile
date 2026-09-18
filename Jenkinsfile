@@ -10,12 +10,12 @@ pipeline {
         )
         string(
             name: 'BROWSERSTACK_ANDROID_DEVICE',
-            defaultValue: 'Samsung Galaxy S22 Ultra',
+            defaultValue: 'Samsung Galaxy S23',
             description: 'Android-устройство'
         )
         string(
             name: 'BROWSERSTACK_ANDROID_OS_VERSION',
-            defaultValue: '12.0',
+            defaultValue: '13.0',
             description: 'Версия Android'
         )
         string(
@@ -40,7 +40,9 @@ pipeline {
             steps {
                 // Параметры джоба Jenkins отдаёт шагу как переменные окружения, а Owner
                 // читает их из source system:env — поэтому пробрасывать их через -D не нужно.
-                // Имена параметров выше обязаны совпадать с ключами в test.properties.
+                // Имена параметров выше обязаны совпадать с ключами в browserstack.properties.
+                // Стенд не передаём: на агенте нет ни Appium, ни устройств, а browserstack
+                // и так значение deviceHost по умолчанию.
                 sh "./gradlew clean test ${params.TESTS ? "--tests '${params.TESTS}'" : ''}"
             }
         }

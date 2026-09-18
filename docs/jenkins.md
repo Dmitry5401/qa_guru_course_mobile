@@ -31,17 +31,19 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 Эмулятор, Appium и Android SDK на агенте не нужны: устройства живут в BrowserStack, а на агенте
 выполняется только Java-клиент.
 
+Отсюда и стенд: в Jenkins имеет смысл только `-DdeviceHost=browserstack`, и это значение
+по умолчанию, поэтому ключ можно не передавать. Стенды `emulation` и `real` требуют Appium
+и устройства на самой машине — см. [stands.md](stands.md).
+
 ## Вариант 1: Freestyle job
 
 1. **New Item → Freestyle project**.
 2. **This project is parameterised**, добавить строковые параметры. Имена обязаны совпадать
-   с ключами в `test.properties`, иначе Owner их не подхватит:
+   с ключами в `browserstack.properties`, иначе Owner их не подхватит:
    `BROWSERSTACK_ANDROID_DEVICE` = `Samsung Galaxy S22 Ultra`,
    `BROWSERSTACK_ANDROID_OS_VERSION` = `12.0`,
    `BROWSERSTACK_IOS_DEVICE` = `iPhone 14`, `BROWSERSTACK_IOS_OS_VERSION` = `16`.
    Параметром можно сделать любой ключ из таблицы ниже, эти четыре — просто самые нужные.
-   Версию Android при этом стоит держать около `12.0`: приложение 2017 года на современном
-   Android не работает, подробности в `browserstack-driver.md`, раздел 6.
 3. **Source Code Management → Git**: `https://github.com/Dmitry5401/qa_guru_course_mobile`.
    В *Branches to build* указать нужную ветку — по умолчанию Jenkins возьмёт `master`, а тесты
    могут лежать в другой.
@@ -71,14 +73,14 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 ## Как параметры доезжают до тестов
 
 Настройки читает библиотека Owner. Интерфейсов два: `config/AuthConfig` — доступы,
-`config/TestConfig` — всё остальное. У каждого три источника:
+`config/BrowserstackConfig` — всё остальное. У каждого три источника:
 
 ```java
 @Config.LoadPolicy(Config.LoadType.MERGE)
 @Config.Sources({
     "system:properties",
     "system:env",
-    "classpath:test.properties"
+    "classpath:browserstack.properties"
 })
 ```
 
@@ -96,17 +98,17 @@ Wrapper зафиксирован в репозитории (`gradle-wrapper.jar`
 | --- | --- | --- |
 | `BROWSERSTACK_USERNAME` | `auth.properties` | логин аккаунта |
 | `BROWSERSTACK_ACCESS_KEY` | `auth.properties` | ключ аккаунта |
-| `BROWSERSTACK_HUB` | `test.properties` | `https://hub.browserstack.com/wd/hub` |
-| `BROWSERSTACK_APPIUM_VERSION` | `test.properties` | `2.0.1` |
-| `BROWSERSTACK_ANDROID_APP_ID` | `test.properties` | `WikipediaSample` |
-| `BROWSERSTACK_ANDROID_DEVICE` | `test.properties` | `Samsung Galaxy S22 Ultra` |
-| `BROWSERSTACK_ANDROID_OS_VERSION` | `test.properties` | `12.0` |
-| `BROWSERSTACK_IOS_APP_ID` | `test.properties` | `BStackSampleApp` |
-| `BROWSERSTACK_IOS_DEVICE` | `test.properties` | `iPhone 14` |
-| `BROWSERSTACK_IOS_OS_VERSION` | `test.properties` | `16` |
+| `BROWSERSTACK_HUB` | `browserstack.properties` | `https://hub.browserstack.com/wd/hub` |
+| `BROWSERSTACK_APPIUM_VERSION` | `browserstack.properties` | `2.0.1` |
+| `BROWSERSTACK_ANDROID_APP_ID` | `browserstack.properties` | `WikipediaStable27` |
+| `BROWSERSTACK_ANDROID_DEVICE` | `browserstack.properties` | `Samsung Galaxy S23` |
+| `BROWSERSTACK_ANDROID_OS_VERSION` | `browserstack.properties` | `13.0` |
+| `BROWSERSTACK_IOS_APP_ID` | `browserstack.properties` | `BStackSampleApp` |
+| `BROWSERSTACK_IOS_DEVICE` | `browserstack.properties` | `iPhone 14` |
+| `BROWSERSTACK_IOS_OS_VERSION` | `browserstack.properties` | `16` |
 
 Проверка, что связка работает: прогон с переменной окружения
-`BROWSERSTACK_IOS_DEVICE="iPhone 14 Pro"` при значении `iPhone 14` в `test.properties` дал
+`BROWSERSTACK_IOS_DEVICE="iPhone 14 Pro"` при значении `iPhone 14` в `browserstack.properties` дал
 сессию на переопределённом устройстве. Ровно этим путём идут параметры джоба.
 
 ```
@@ -151,7 +153,7 @@ systemProperties(System.getProperties())
 параллельный запуск в JUnit, лишние сессии встанут в очередь.
 
 Приложения привязаны к аккаунту: `app_url` из чужого аккаунта не подойдёт, а `custom_id`
-(`WikipediaSample`, `BStackSampleApp`) переживает повторную загрузку. Если джоб падает с
+(`WikipediaStable27`, `BStackSampleApp`) переживает повторную загрузку. Если джоб падает с
 `BROWSERSTACK_INVALID_APP_CAP`, смотреть надо в `recent_apps` того аккаунта, чьи ключи
 подставлены — подробности в `browserstack-driver.md`.
 

@@ -44,6 +44,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:${junitVersion}"))
     // Без явной версии — возьмётся из BOM
     testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
     // Опционально: движок и лаунчер будут подхватываться через BOM
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
