@@ -5,8 +5,6 @@ import config.DeviceHostConverter;
 import drivers.BrowserstackDriver;
 import drivers.EmulationDriver;
 import drivers.RealDriver;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -28,8 +26,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Устройство для этого не нужно — сессия не поднимается, — поэтому тест идёт на любой
  * машине и в CI. Стенд в него приходит из того же ключа, что и в остальные тесты,
  * так что три прогона с разными значениями покрывают все три стенда.
+ * <p>
+ * Имена тестов и тексты assert'ов здесь английские: Gradle печатает их в консоль, а на
+ * русской Windows (кодовая страница 866) кириллица оттуда выходит нечитаемой — ровно так
+ * и получилось с прежними {@code @DisplayName}. Комментарии и шаги Allure остаются
+ * русскими: их читают в IDE и в отчёте, там с UTF-8 проблем нет.
  */
-@Disabled
 class StandSelectionTest {
 
     @ParameterizedTest(name = "-DdeviceHost={0} -> {1}")
@@ -40,24 +42,21 @@ class StandSelectionTest {
         "REAL,         REAL",
         "  real  ,     REAL"
     })
-    @DisplayName("Значение deviceHost разбирается без оглядки на регистр и пробелы")
     void deviceHostIsParsedIgnoringCase(String input, DeviceHost expected) {
         assertEquals(expected, new DeviceHostConverter().convert(null, input));
     }
 
     @Test
-    @DisplayName("Незнакомый стенд подсказывает список допустимых значений")
     void unknownDeviceHostListsAllowedValues() {
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
                 () -> new DeviceHostConverter().convert(null, "emulator"));
 
         assertTrue(thrown.getMessage().contains("browserstack | emulation | real"),
-                "Сообщение должно называть допустимые стенды, а не только ошибку: "
+                "The message should list the allowed stands, not just report an error: "
                         + thrown.getMessage());
     }
 
     @Test
-    @DisplayName("Выбранный стенд даёт свой драйвер и заполненный конфиг")
     void selectedStandIsFullyConfigured() {
         Class<?> driver = new TestBase().driver();
 
@@ -65,8 +64,8 @@ class StandSelectionTest {
             case BROWSERSTACK -> {
                 assertEquals(BrowserstackDriver.class, driver);
                 assertTrue(browserstack.hubUrl().startsWith("https://"), browserstack.hubUrl());
-                assertFalse(browserstack.androidApp().isBlank(), "не задано приложение");
-                assertFalse(auth.user().isBlank(), "не задан логин BrowserStack");
+                assertFalse(browserstack.androidApp().isBlank(), "app is not set");
+                assertFalse(auth.user().isBlank(), "BrowserStack user is not set");
             }
             case EMULATION -> {
                 assertEquals(EmulationDriver.class, driver);
