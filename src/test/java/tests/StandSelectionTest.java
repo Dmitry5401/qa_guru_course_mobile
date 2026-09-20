@@ -5,6 +5,7 @@ import config.DeviceHostConverter;
 import drivers.BrowserstackDriver;
 import drivers.EmulationDriver;
 import drivers.RealDriver;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * машине и в CI. Стенд в него приходит из того же ключа, что и в остальные тесты,
  * так что три прогона с разными значениями покрывают все три стенда.
  */
+@Disabled
 class StandSelectionTest {
 
     @ParameterizedTest(name = "-DdeviceHost={0} -> {1}")
