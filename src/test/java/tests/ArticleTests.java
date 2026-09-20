@@ -3,8 +3,7 @@ package tests;
 import org.junit.jupiter.api.Test;
 
 import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
-import static com.codeborne.selenide.Condition.exactText;
-import static com.codeborne.selenide.Condition.visible;
+import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 import static io.appium.java_client.AppiumBy.id;
@@ -14,20 +13,20 @@ import static org.openqa.selenium.By.xpath;
 public class ArticleTests extends TestBase {
 
     @Test
-    void openSonyArticleTest() {
+    void openJavaArticleTest() {
         step("Пропуск онбординга", () ->
             $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click()
         );
 
         step("Поиск статьи о Selenide", () -> {
             $(id("org.wikipedia:id/search_container")).click();
-            $(id("org.wikipedia:id/search_src_text")).sendKeys("Sony");
+            $(id("org.wikipedia:id/search_src_text")).sendKeys("Java");
         });
 
         step("Открытие статьи из результатов поиска", () ->
             $$(id("org.wikipedia:id/page_list_item_title"))
                 .shouldHave(sizeGreaterThan(0))
-                .findBy(exactText("Sony"))
+                .findBy(text("Java"))
                 .click()
         );
 
