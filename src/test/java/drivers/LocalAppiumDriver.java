@@ -20,30 +20,42 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-import static config.Project.localConfig;
 import static io.appium.java_client.remote.AutomationName.ANDROID_UIAUTOMATOR2;
 import static io.appium.java_client.remote.MobilePlatform.ANDROID;
 import static org.apache.commons.io.FileUtils.copyInputStreamToFile;
 
 /**
- * Создаёт для Selenide сессию на локальном Appium-сервере: эмулятор или телефон в adb.
- * Подключается через {@code Configuration.browser = LocalDriver.class.getName()}.
- * Настройки — в {@code local.properties}, см. {@link config.LocalConfig}.
+ * Общая часть стендов, работающих через Appium на своей машине: {@link EmulationDriver}
+ * и {@link RealDriver}. Сервер, приложение и проверки у них одни и те же, различается
+ * только выбор устройства — его задаёт наследник в {@link #selectDevice}.
  * <p>
  * Тексты исключений здесь на английском намеренно: Gradle печатает их в консоль в UTF-8,
  * не спрашивая кодовую страницу терминала, и на русской Windows (OEM 866) русский текст
  * превращается в «╤Б╨╗╤Г╤И╨░╨╡╤В». Комментарии и шаги Allure читаются в IDE и в отчёте,
  * там с UTF-8 проблем нет, поэтому они остаются на русском.
  */
-public class LocalDriver implements WebDriverProvider {
+public abstract class LocalAppiumDriver implements WebDriverProvider {
 
     private static final String USER_AGENT =
             "qa-guru-course-mobile/1.0 (https://github.com/Dmitry5401/qa_guru_course_mobile)";
+    private static final String LEGACY_BASE_PATH = "/wd/hub";
+
+    private enum Probe { OK, NO_ROUTE, UNREACHABLE }
+
+    /** Настройки стенда: адрес сервера и приложение. */
+    protected abstract LocalStandConfig config();
+
+    /**
+     * Указывает Appium, на какое устройство идти. {@code deviceName} для этого не годится:
+     * Appium смотрит на {@code avd}, затем на {@code udid}, а если не задано ничего —
+     * берёт первое устройство из {@code adb devices}.
+     */
+    protected abstract void selectDevice(UiAutomator2Options options);
 
     @Nonnull
     @Override
     public WebDriver createDriver(@Nonnull Capabilities capabilities) {
-        URL appiumUrl = getAppiumServerUrl();
+        URL appiumUrl = appiumServerUrl();
         // Проверяем сервер до скачивания APK: SessionNotCreatedException про недоступный
         // адрес читается плохо, а ждать загрузки приложения ради него совсем ни к чему.
         checkAppiumIsReachable(appiumUrl);
@@ -53,37 +65,22 @@ public class LocalDriver implements WebDriverProvider {
 
         options.setAutomationName(ANDROID_UIAUTOMATOR2)
                 .setPlatformName(ANDROID)
-                .setApp(getAppPath())
-                .setAppPackage(localConfig.appPackage())
-                .setAppActivity(localConfig.appActivity());
+                .setApp(appPath())
+                .setAppPackage(config().appPackage())
+                .setAppActivity(config().appActivity());
 
-        // deviceName Appium при выборе устройства игнорирует. Порядок такой: avd, затем
-        // udid, затем platformVersion, иначе первое устройство из adb devices.
-        // avd удобен для эмулятора: имя из Device Manager стабильно, а номер порта
-        // в emulator-5554 зависит от порядка запуска. Вдобавок Appium сам поднимет
-        // эмулятор с таким именем, если тот ещё не запущен.
-        if (!localConfig.avd().isBlank()) {
-            options.setAvd(localConfig.avd());
-        } else if (!localConfig.deviceUdid().isBlank()) {
-            options.setUdid(localConfig.deviceUdid());
-        } else if (!localConfig.platformVersion().isBlank()) {
-            options.setPlatformVersion(localConfig.platformVersion());
-        }
+        selectDevice(options);
 
         return new AndroidDriver(appiumUrl, options);
     }
 
-    public static URL getAppiumServerUrl() {
+    private URL appiumServerUrl() {
         try {
-            return URI.create(localConfig.appiumUrl()).toURL();
+            return URI.create(config().appiumUrl()).toURL();
         } catch (MalformedURLException e) {
-            throw new IllegalStateException("Malformed Appium URL: " + localConfig.appiumUrl(), e);
+            throw new IllegalStateException("Malformed Appium URL: " + config().appiumUrl(), e);
         }
     }
-
-    private static final String LEGACY_BASE_PATH = "/wd/hub";
-
-    private enum Probe { OK, NO_ROUTE, UNREACHABLE }
 
     private void checkAppiumIsReachable(URL appiumUrl) {
         String base = appiumUrl.toString().replaceAll("/+$", "");
@@ -133,8 +130,8 @@ public class LocalDriver implements WebDriverProvider {
         }
     }
 
-    private String getAppPath() {
-        String appUrl = localConfig.appUrl();
+    private String appPath() {
+        String appUrl = config().appUrl();
         String appFileName = appUrl.substring(appUrl.lastIndexOf('/') + 1);
         // Не в build/ и не в resources: clean не должен стирать скачанный APK,
         // а processTestResources — копировать его на каждую сборку.

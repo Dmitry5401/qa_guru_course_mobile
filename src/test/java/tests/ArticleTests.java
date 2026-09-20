@@ -36,7 +36,7 @@ public class ArticleTests extends TestBase {
             // Своего resource-id у заголовка нет: тело статьи рисует WebView, и её
             // название попадает к нам как text самого WebView. Проверяем именно его —
             // так видно, что открылась нужная статья, а не просто какой-то экран.
-            $(xpath("//android.webkit.WebView[@text='Sony']")).shouldBe(visible);
+            $(xpath("//android.webkit.WebView[@text='Java']")).shouldBe(visible);
         });
     }
 }
