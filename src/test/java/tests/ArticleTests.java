@@ -18,7 +18,7 @@ public class ArticleTests extends TestBase {
             $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click()
         );
 
-        step("Поиск статьи о Selenide", () -> {
+        step("Поиск статьи о Java", () -> {
             $(id("org.wikipedia:id/search_container")).click();
             $(id("org.wikipedia:id/search_src_text")).sendKeys("Java");
         });
@@ -36,7 +36,7 @@ public class ArticleTests extends TestBase {
             // Своего resource-id у заголовка нет: тело статьи рисует WebView, и её
             // название попадает к нам как text самого WebView. Проверяем именно его —
             // так видно, что открылась нужная статья, а не просто какой-то экран.
-            $(xpath("//android.webkit.WebView[@text='Sony']")).shouldBe(visible);
+            $(xpath("//android.webkit.WebView[@text='Java']")).shouldBe(visible);
         });
     }
 }
