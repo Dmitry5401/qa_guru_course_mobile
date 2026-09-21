@@ -40,6 +40,10 @@ public abstract class LocalAppiumDriver implements WebDriverProvider {
             "qa-guru-course-mobile/1.0 (https://github.com/Dmitry5401/qa_guru_course_mobile)";
     private static final String LEGACY_BASE_PATH = "/wd/hub";
 
+    /** Сколько ждём приложение на экране после старта сессии. */
+    private static final Duration APP_START_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration FOREGROUND_POLL_INTERVAL = Duration.ofMillis(500);
+
     private enum Probe { OK, NO_ROUTE, UNREACHABLE }
 
     /** Настройки стенда: адрес сервера и приложение. */
@@ -72,7 +76,65 @@ public abstract class LocalAppiumDriver implements WebDriverProvider {
         selectDevice(options);
         selectLanguage(options);
 
-        return new AndroidDriver(appiumUrl, options);
+        AndroidDriver driver = new AndroidDriver(appiumUrl, options);
+        checkAppIsOnScreen(driver);
+        return driver;
+    }
+
+    /**
+     * Проверяет, что приложение действительно на экране.
+     * <p>
+     * Сессия создаётся успешно и тогда, когда приложение с экрана уже ушло: язык стенда
+     * Appium меняет через системные настройки, а смена языка перезапускает приложения, и
+     * телефон может остаться на рабочем столе. Без этой проверки тест тридцать секунд
+     * ищет кнопку на чужом экране и падает с «Element not found», как будто виноват
+     * локатор.
+     * <p>
+     * Заблокированный телефон — второй такой случай и единственный, который не лечится
+     * кодом: через защищённый экран блокировки Appium не проходит.
+     */
+    private void checkAppIsOnScreen(AndroidDriver driver) {
+        String appPackage = config().appPackage();
+        if (waitForForeground(driver, appPackage)) {
+            return;
+        }
+        if (driver.isDeviceLocked()) {
+            throw new IllegalStateException("The device is locked, so " + appPackage
+                    + " never made it to the screen. Appium does not get through a secure lock"
+                    + " screen on its own: unlock the phone, keep the screen awake, and run again.");
+        }
+
+        driver.activateApp(appPackage);
+        if (waitForForeground(driver, appPackage)) {
+            return;
+        }
+
+        throw new IllegalStateException("The screen belongs to " + driver.getCurrentPackage()
+                + " (" + driver.currentActivity() + "), not to " + appPackage + "."
+                + " Start the app on the device by hand to see what happens,"
+                + " and check LOCAL_APP_PACKAGE and LOCAL_APP_ACTIVITY.");
+    }
+
+    private boolean waitForForeground(AndroidDriver driver, String appPackage) {
+        long deadline = System.currentTimeMillis() + APP_START_TIMEOUT.toMillis();
+        while (true) {
+            if (appPackage.equals(driver.getCurrentPackage())) {
+                return true;
+            }
+            if (System.currentTimeMillis() >= deadline) {
+                return false;
+            }
+            sleep(FOREGROUND_POLL_INTERVAL);
+        }
+    }
+
+    private void sleep(Duration duration) {
+        try {
+            Thread.sleep(duration.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for the app to start", e);
+        }
     }
 
     /**
