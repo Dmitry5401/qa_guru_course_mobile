@@ -12,9 +12,7 @@ public class SearchTests extends TestBase {
 
     @Test
     void successfulSearchTest() {
-        step("Пропуск онбординга", () ->
-            $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click()
-        );
+        step("Пропуск онбординга", TestBase::skipOnboarding);
 
         step("Ввод текста для поиска", () -> {
             $(id("org.wikipedia:id/search_container")).click();

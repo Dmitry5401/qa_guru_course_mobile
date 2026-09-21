@@ -15,11 +15,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriverException;
 
+import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.Wait;
 import static com.codeborne.selenide.Selenide.closeWebDriver;
 import static com.codeborne.selenide.Selenide.open;
+import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
 import static config.Project.deviceHost;
+import static io.appium.java_client.AppiumBy.id;
 
 @ExtendWith(SessionDiagnostics.class)
 public class TestBase {
@@ -52,6 +57,34 @@ public class TestBase {
         Configuration.browser = driver().getName();
         SelenideLogger.addListener("AllureSelenide", new AllureSelenide());
         open();
+    }
+
+    /**
+     * Пропускает онбординг, если приложение его показывает.
+     * <p>
+     * Показывает не всегда. Онбординг живёт в данных приложения, а чистые данные к началу
+     * сессии — не гарантия, а поведение по умолчанию: в облаке устройство каждый раз
+     * новое, а свой телефон отдаёт приложение в том виде, в каком его оставили — уже
+     * пройденным онбордингом вперёд. Безусловный {@code click()} в этом случае тридцать
+     * секунд искал кнопку и падал с «Element not found», хотя приложение было на экране
+     * и готово к работе.
+     * <p>
+     * Поэтому ждём любой из двух стартовых экранов и нажимаем «Skip» только тогда, когда
+     * он есть. Если не пришёл ни один, сообщение называет оба — это уже не про онбординг,
+     * а про то, что на экране не приложение. Текст английский по той же причине, что и
+     * у драйверов: на русской Windows кириллица в консоли нечитаема.
+     */
+    protected static void skipOnboarding() {
+        By skipButton = id("org.wikipedia:id/fragment_onboarding_skip_button");
+        By searchContainer = id("org.wikipedia:id/search_container");
+
+        Wait().withMessage("neither the onboarding screen nor the Wikipedia main screen showed up")
+                .until(driver -> !driver.findElements(skipButton).isEmpty()
+                        || !driver.findElements(searchContainer).isEmpty());
+
+        if (!getWebDriver().findElements(skipButton).isEmpty()) {
+            $(skipButton).click();
+        }
     }
 
     @AfterEach

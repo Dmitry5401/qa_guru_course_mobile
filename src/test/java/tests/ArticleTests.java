@@ -64,9 +64,7 @@ public class ArticleTests extends TestBase {
 
     @Test
     void openJavaArticleTest() {
-        step("Пропуск онбординга", () ->
-            $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click()
-        );
+        step("Пропуск онбординга", TestBase::skipOnboarding);
 
         step("Поиск статьи «" + ARTICLE + "»", () -> {
             $(id("org.wikipedia:id/search_container")).click();
