@@ -19,6 +19,13 @@ import static io.appium.java_client.AppiumBy.id;
 import static io.qameta.allure.Allure.step;
 import static org.openqa.selenium.By.xpath;
 
+/**
+ * Путь от поиска до внешнего сайта: статья «Java» → раздел «Ссылки» → сайт Oracle.
+ * <p>
+ * Тест читает русскую Википедию, и это не случайность: статья «Java» в английском
+ * разделе — про остров в Индонезии, а не про язык программирования. Поэтому язык
+ * устройства стенды задают явно, см. {@code docs/stands.md}.
+ */
 public class ArticleTests extends TestBase {
 
     /**
@@ -27,10 +34,19 @@ public class ArticleTests extends TestBase {
      * везде, и тест падал на сверке заголовка со старым значением.
      */
     private static final String ARTICLE = "Java";
-    private static final String LANGUAGE_ARTICLE = "Java (programming language)";
-    private static final String LINKS_SECTION = "External links";
-    private static final String OFFICIAL_SITE_LINK = "Java Software, Oracle";
-    private static final String OFFICIAL_SITE_URL = "oracle.com/java";
+
+    /** Подзаголовок статьи. Отличает язык программирования от одноимённых статей. */
+    private static final String ARTICLE_DESCRIPTION = "язык программирования";
+
+    private static final String LINKS_SECTION = "Ссылки";
+    private static final String OFFICIAL_SITE_LINK = "Официальный сайт Java";
+
+    /**
+     * Адрес, на который ведёт ссылка. Именно java.com, а не oracle.com/java: на сайт
+     * Oracle про Java ведут оба адреса, и в английском разделе стоит второй — но проверять
+     * надо тот, что в ссылке русской статьи, иначе тест падает на последнем шаге.
+     */
+    private static final String OFFICIAL_SITE_URL = "java.com";
 
     private static final String ARTICLE_CONTAINER = "org.wikipedia:id/page_contents_container";
     private static final String ACTION_BAR = "org.wikipedia:id/page_actions_tab_container";
@@ -55,17 +71,18 @@ public class ArticleTests extends TestBase {
             $(id("org.wikipedia:id/search_src_text")).sendKeys(ARTICLE);
         });
 
-        step("Открытие статьи из результатов поиска", () ->
-            // Именно exactText: по «Java» выдача возвращает ещё JavaScript, JavaFX и
-            // JavaServer Pages, и вхождение подстроки открыло бы первую попавшуюся из них.
-            // Тогда сверять заголовок было бы не с чем — статья открылась бы не та.
+        step("Переход по первому результату поиска", () ->
+            // Заголовок сверяем до нажатия, и именно exactText: по «Java» выдача
+            // возвращает ещё JavaScript, JavaServer Pages и Java SE, а вхождение
+            // подстроки пустило бы тест в любую из них.
             $$(id("org.wikipedia:id/page_list_item_title"))
                 .shouldHave(sizeGreaterThan(0))
-                .findBy(exactText(ARTICLE))
+                .first()
+                .shouldHave(exactText(ARTICLE))
                 .click()
         );
 
-        step("Проверка, что открылась выбранная статья", () -> {
+        step("Проверка, что открылась статья о языке программирования", () -> {
             $(id(ARTICLE_CONTAINER)).shouldBe(visible);
 
             // Своего resource-id у заголовка нет: тело статьи рисует WebView. Название
@@ -74,28 +91,12 @@ public class ArticleTests extends TestBase {
             // устройстве. Поэтому спрашиваем любой узел внутри контейнера статьи, а не
             // прибиваем локатор к android.webkit.WebView, как было раньше.
             $(inArticle("//*[@text='" + ARTICLE + "']")).shouldBe(visible);
-        });
 
-        step("Переход по ссылке «" + LANGUAGE_ARTICLE + "»", () -> {
-            click(articleLink(LANGUAGE_ARTICLE));
-
-            // По внутренней ссылке приложение не переходит сразу, а показывает карточку
-            // предпросмотра с началом статьи. Читаем её заголовок: это проверка, что
-            // нажали именно на ту ссылку, — и уходим в статью кнопкой «Read article».
-            $(id("org.wikipedia:id/link_preview_title")).shouldHave(exactText(LANGUAGE_ARTICLE));
-            $(id("org.wikipedia:id/link_preview_primary_button")).click();
-        });
-
-        step("Проверка, что открылась статья о языке программирования", () -> {
-            $(id(ARTICLE_CONTAINER)).shouldBe(visible);
-
-            // Одного названия мало: ровно такой же текст есть в шапке статьи про остров —
-            // в той самой ссылке, по которой мы только что нажали. Поэтому вторым условием
-            // идёт подзаголовок статьи: у острова там «Island and region in Indonesia», и
-            // пройти обе проверки разом может только статья о языке.
-            $(inArticle("//*[@text='" + LANGUAGE_ARTICLE + "']")).shouldBe(visible);
+            // Одного названия мало: «Java» называются и статья о платформе, и статья
+            // об острове. Подзаголовок под названием — это и есть та приписка
+            // «язык программирования», по которой статью выбирали в выдаче.
             $(xpath("//*[@resource-id='pcs-edit-section-title-description']"))
-                .shouldHave(text("programming language"));
+                .shouldHave(text(ARTICLE_DESCRIPTION));
         });
 
         step("Переход в раздел «" + LINKS_SECTION + "» через содержание", () -> {
@@ -114,7 +115,7 @@ public class ArticleTests extends TestBase {
             $(inArticle("//*[@text='" + LINKS_SECTION + "']")).shouldBe(visible)
         );
 
-        step("Переход по ссылке на официальный сайт Java", () ->
+        step("Переход по ссылке «" + OFFICIAL_SITE_LINK + "»", () ->
             click(articleLink(OFFICIAL_SITE_LINK))
         );
 
@@ -146,10 +147,10 @@ public class ArticleTests extends TestBase {
     /**
      * Нажимает ссылку, предварительно подведя её под палец.
      * <p>
-     * Панель действий («Save», «Language», «Contents») висит поверх статьи, и ссылка может
-     * оказаться прямо под ней — так и вышло с «{@value #OFFICIAL_SITE_LINK}». Тап тогда
-     * достаётся панели: тест открывал список языков вместо сайта Oracle. Поэтому сначала
-     * прокручиваем статью, пока ссылка не окажется выше панели.
+     * Панель действий («Сохранить», «Язык», «Содержание») висит поверх статьи, и ссылка
+     * может оказаться прямо под ней — так и вышло с «{@value #OFFICIAL_SITE_LINK}». Тап
+     * тогда достаётся панели: тест открывал список языков вместо сайта Oracle. Поэтому
+     * сначала прокручиваем статью, пока ссылка не окажется выше панели.
      */
     private static void click(SelenideElement link) {
         for (int step = 0; step < SCROLL_STEPS_LIMIT && !isAboveActionBar(link); step++) {

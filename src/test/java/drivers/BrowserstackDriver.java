@@ -38,6 +38,10 @@ public class BrowserstackDriver implements WebDriverProvider, BrowserstackStand 
         options.merge(capabilities);
         // app_url (bs://...) или custom_id уже загруженного в App Automate приложения
         options.setApp(browserstack.androidApp());
+        // Язык устройства задаём явно: от него зависит язык статей в приложении, а
+        // ArticleTests сверяет их содержимое. См. BrowserstackConfig#androidLanguage.
+        options.setLanguage(browserstack.androidLanguage());
+        options.setLocale(browserstack.androidLocale());
         options.setCapability("bstack:options", browserstackOptions);
 
         try {

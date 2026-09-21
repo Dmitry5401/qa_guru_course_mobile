@@ -41,6 +41,19 @@ public interface BrowserstackConfig extends Config {
     @Key("BROWSERSTACK_ANDROID_OS_VERSION")
     String androidOsVersion();
 
+    /**
+     * Язык и регион, в которые BrowserStack переведёт устройство перед сессией.
+     * Нужны из-за {@code ArticleTests}: Википедия выбирает язык статей по языку
+     * устройства, а статьи «Java» в русском и английском разделах — про разное, так что
+     * без этих ключей один и тот же тест видел бы в облаке не то, что на своём телефоне.
+     * Подробнее — в {@code docs/stands.md}.
+     */
+    @Key("BROWSERSTACK_ANDROID_LANGUAGE")
+    String androidLanguage();
+
+    @Key("BROWSERSTACK_ANDROID_LOCALE")
+    String androidLocale();
+
     @Key("BROWSERSTACK_IOS_APP_ID")
     String iosApp();
 
