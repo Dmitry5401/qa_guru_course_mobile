@@ -41,6 +41,7 @@ public class ArticleTests extends TestBase {
      */
     private static final String OFFICIAL_SITE_URL = "oracle.com/java";
 
+    private static final String SEARCH_RESULT_TITLE = "org.wikipedia:id/page_list_item_title";
     private static final String ARTICLE_CONTAINER = "org.wikipedia:id/page_contents_container";
     private static final String ACTION_BAR = "org.wikipedia:id/page_actions_tab_container";
 
@@ -64,22 +65,15 @@ public class ArticleTests extends TestBase {
             $(id("org.wikipedia:id/search_src_text")).sendKeys(ARTICLE);
         });
 
-        step("Открытие статьи из результатов поиска", () ->
-            $$(id("org.wikipedia:id/page_list_item_title"))
-                .shouldHave(sizeGreaterThan(0))
-                .findBy(exactText(ARTICLE))
-                .click()
-        );
+        step("Открытие статьи «" + JAVA_LANGUAGE_ARTICLE + "» из результатов поиска", () -> {
+            $$(id(SEARCH_RESULT_TITLE)).shouldHave(sizeGreaterThan(0));
 
-        step("Проверка, что открылась выбранная статья", () -> {
-            $(id(ARTICLE_CONTAINER)).shouldBe(visible);
-            $(inArticle("//*[@text='" + ARTICLE + "']")).shouldBe(visible);
-        });
-
-        step("Переход по ссылке «" + JAVA_LANGUAGE_ARTICLE + "»", () -> {
-            clickArticleLink(JAVA_LANGUAGE_ARTICLE);
-            $(id("org.wikipedia:id/link_preview_title")).shouldHave(exactText(JAVA_LANGUAGE_ARTICLE));
-            $(id("org.wikipedia:id/link_preview_primary_button")).click();
+            // Строку берём локатором по тексту, а не findBy по коллекции. findBy
+            // запоминает номер строки, а выдача догружается: сначала приходят офлайновые
+            // совпадения, следом сетевые, и список перерисовывается. Пока Selenide
+            // собирался нажать, номер уже означал другую строку — нажатие доставалось
+            // первому результату, и открывалась статья про остров Ява.
+            $(searchResult(JAVA_LANGUAGE_ARTICLE)).click();
         });
 
         step("Проверка, что открылась статья о языке программирования", () -> {
@@ -116,6 +110,14 @@ public class ArticleTests extends TestBase {
      */
     private static By inArticle(String xpathInside) {
         return xpath("//*[@resource-id='" + ARTICLE_CONTAINER + "']" + xpathInside);
+    }
+
+    /**
+     * Строка выдачи с точно таким заголовком. Точно таким, а не с вхождением: по «Java»
+     * выдача возвращает ещё JavaScript, Java version history и саму «Java» про остров.
+     */
+    private static By searchResult(String title) {
+        return xpath("//*[@resource-id='" + SEARCH_RESULT_TITLE + "'][@text='" + title + "']");
     }
 
     /**
