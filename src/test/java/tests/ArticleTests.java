@@ -36,10 +36,10 @@ public class ArticleTests extends TestBase {
     private static final String ACTION_BAR = "org.wikipedia:id/page_actions_tab_container";
 
     /**
-     * Насколько прокручиваем статью за один шаг — доля от высоты её области. На Galaxy S23
-     * 0.15 — это около 200 px: достаточно мелко, чтобы не проскочить нужную ссылку.
+     * Насколько прокручиваем статью за один шаг — доля от высоты области жеста. На Galaxy
+     * S23 это около 280 px: достаточно мелко, чтобы не проскочить нужную ссылку.
      */
-    private static final double SCROLL_STEP = 0.15;
+    private static final double SCROLL_STEP = 0.3;
 
     /** Предохранитель от бесконечной прокрутки, если ссылку так и не удалось подвести. */
     private static final int SCROLL_STEPS_LIMIT = 15;
@@ -150,21 +150,10 @@ public class ArticleTests extends TestBase {
      * оказаться прямо под ней — так и вышло с «{@value #OFFICIAL_SITE_LINK}». Тап тогда
      * достаётся панели: тест открывал список языков вместо сайта Oracle. Поэтому сначала
      * прокручиваем статью, пока ссылка не окажется выше панели.
-     * <p>
-     * Прокрутка — именно {@code scrollGesture}: у {@code swipeGesture} есть инерция, и
-     * страница уезжала так далеко, что ссылка пропадала с экрана.
      */
     private static void click(SelenideElement link) {
         for (int step = 0; step < SCROLL_STEPS_LIMIT && !isAboveActionBar(link); step++) {
-            SelenideElement article = $(id(ARTICLE_CONTAINER));
-            int top = article.getLocation().getY();
-            ((JavascriptExecutor) getWebDriver()).executeScript("mobile: scrollGesture", Map.of(
-                    "left", article.getLocation().getX(),
-                    "top", top,
-                    "width", article.getSize().getWidth(),
-                    "height", actionBarTop() - top,
-                    "direction", "down",
-                    "percent", SCROLL_STEP));
+            scrollArticle();
         }
         link.shouldBe(visible).click();
     }
@@ -176,6 +165,29 @@ public class ArticleTests extends TestBase {
             return false;
         }
         return link.getLocation().getY() + link.getSize().getHeight() < actionBarTop();
+    }
+
+    /**
+     * Прокручивает статью на один шаг вниз.
+     * <p>
+     * Жест — именно {@code scrollGesture}: у {@code swipeGesture} есть инерция, и страница
+     * уезжала так далеко, что нужная ссылка пропадала с экрана.
+     * <p>
+     * Область жеста — верхняя половина статьи, и это не украшение. Палец начинает движение
+     * у нижней границы области, поэтому если дотянуть её до панели действий, нажатие
+     * достанется панели: {@code scrollGesture} возвращал {@code false}, страница стояла на
+     * месте, и цикл выше упирался в предохранитель.
+     */
+    private static void scrollArticle() {
+        SelenideElement article = $(id(ARTICLE_CONTAINER));
+        int top = article.getLocation().getY();
+        ((JavascriptExecutor) getWebDriver()).executeScript("mobile: scrollGesture", Map.of(
+                "left", article.getLocation().getX(),
+                "top", top,
+                "width", article.getSize().getWidth(),
+                "height", (actionBarTop() - top) / 2,
+                "direction", "down",
+                "percent", SCROLL_STEP));
     }
 
     private static int actionBarTop() {
