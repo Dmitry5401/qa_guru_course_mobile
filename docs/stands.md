@@ -87,33 +87,34 @@ public class EmulationDriver extends LocalAppiumDriver {
 
 | Язык | Что за статья «Java» | Раздел внешних ссылок | Ссылка на сайт |
 | --- | --- | --- | --- |
+| английский | остров в Индонезии | «External links» | «Java Software, Oracle» → `oracle.com/java` |
 | русский | язык программирования | «Ссылки» | «Официальный сайт Java» → `java.com` |
-| английский | остров в Индонезии | «External links» | «Java travel guide from Wikivoyage» |
 
 Разный не только текст — разный сценарий: в английском разделе до языка программирования
-надо ещё дойти по ссылке в шапке статьи об острове. Один тест обе версии не покрывает,
-поэтому язык стенды задают явно, а не полагаются на настройки устройства:
+надо ещё дойти по ссылке в шапке статьи об острове, в русском статья сразу та. Один тест
+обе версии не покрывает, поэтому язык стенды задают явно, одинаково для всех трёх:
 
 ```properties
 # browserstack.properties
-BROWSERSTACK_ANDROID_LANGUAGE=ru
-BROWSERSTACK_ANDROID_LOCALE=RU
+BROWSERSTACK_ANDROID_LANGUAGE=en
+BROWSERSTACK_ANDROID_LOCALE=US
 
-# emulation.properties
-LOCAL_LANGUAGE=ru
-LOCAL_LOCALE=RU
+# emulation.properties и real.properties
+LOCAL_LANGUAGE=en
+LOCAL_LOCALE=US
 ```
 
-Стенд `real` — исключение, у него эти ключи пустые. Телефон обычно личный, а Appium,
-переключив язык, обратно его не вернёт: менять язык телефона ради теста не дело. Если
-телефон не русский, язык задаётся на один прогон:
+У стенда `real` за это приходится платить: телефон обычно личный, а Appium язык обратно
+не возвращает. После сессии драйвер восстанавливает клавиатуру, анимации и hidden-api
+policy — языка в этом списке нет, так что телефон останется английским, пока не вернуть
+язык руками в настройках. Если это неудобно, ключи гасятся на прогон:
 
 ```bash
-./gradlew test -DdeviceHost=real -DLOCAL_LANGUAGE=ru -DLOCAL_LOCALE=RU
+./gradlew test -DdeviceHost=real -DLOCAL_LANGUAGE= -DLOCAL_LOCALE=
 ```
 
-Остальные тесты от языка не зависят: они ищут элементы по `resource-id`, а те не
-переводятся. От языка зависит только `ArticleTests` — он читает саму статью.
+Тогда пройдёт всё, кроме `ArticleTests`: остальные тесты ищут элементы по `resource-id`,
+а те не переводятся. От языка зависит только `ArticleTests` — он читает саму статью.
 
 ## Почему тесты пришлось объединить
 
