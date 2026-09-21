@@ -70,8 +70,22 @@ public abstract class LocalAppiumDriver implements WebDriverProvider {
                 .setAppActivity(config().appActivity());
 
         selectDevice(options);
+        selectLanguage(options);
 
         return new AndroidDriver(appiumUrl, options);
+    }
+
+    /**
+     * Переводит устройство в язык стенда — от него зависит язык статей в приложении,
+     * а его сверяет {@code ArticleTests}. См. {@link LocalStandConfig#language()}.
+     */
+    private void selectLanguage(UiAutomator2Options options) {
+        // Пустое значение не проставляем: Appium в этом случае оставит язык устройства
+        // в покое, а иначе увёл бы его в пустую локаль.
+        if (!config().language().isBlank()) {
+            options.setLanguage(config().language());
+            options.setLocale(config().locale());
+        }
     }
 
     private URL appiumServerUrl() {

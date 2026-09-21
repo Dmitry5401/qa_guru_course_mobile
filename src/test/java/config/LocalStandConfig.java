@@ -25,4 +25,21 @@ public interface LocalStandConfig extends Config {
 
     @Key("LOCAL_APP_ACTIVITY")
     String appActivity();
+
+    /**
+     * Язык и регион, в которые Appium переведёт устройство перед сессией. Нужны из-за
+     * {@code ArticleTests}: Википедия выбирает язык статей по языку устройства, а статьи
+     * «Java» в русском и английском разделах — про разное.
+     * <p>
+     * Пустое значение оставляет язык устройства как есть. Это единственный способ
+     * не трогать личный телефон: язык Appium меняет, а обратно не возвращает.
+     * {@code -DLOCAL_LANGUAGE= -DLOCAL_LOCALE=} гасит ключи на один прогон.
+     */
+    @Key("LOCAL_LANGUAGE")
+    @DefaultValue("")
+    String language();
+
+    @Key("LOCAL_LOCALE")
+    @DefaultValue("")
+    String locale();
 }
