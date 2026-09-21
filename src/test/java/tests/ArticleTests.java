@@ -2,6 +2,7 @@ package tests;
 
 import com.codeborne.selenide.SelenideElement;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 
 import java.util.Map;
@@ -20,7 +21,8 @@ import static io.qameta.allure.Allure.step;
 import static org.openqa.selenium.By.xpath;
 
 /**
- * Путь от поиска до внешнего сайта: статья «Java» → раздел «Ссылки» → сайт Oracle.
+ * Путь от поиска до внешнего сайта: статья «Java» → раздел «Ссылки» → официальный
+ * сайт Java.
  * <p>
  * Тест читает русскую Википедию, и это не случайность: статья «Java» в английском
  * разделе — про остров в Индонезии, а не про язык программирования. Поэтому язык
@@ -116,7 +118,7 @@ public class ArticleTests extends TestBase {
         );
 
         step("Переход по ссылке «" + OFFICIAL_SITE_LINK + "»", () ->
-            click(articleLink(OFFICIAL_SITE_LINK))
+            clickArticleLink(OFFICIAL_SITE_LINK)
         );
 
         step("Проверка, что открылся официальный сайт Java", () -> {
@@ -129,30 +131,27 @@ public class ArticleTests extends TestBase {
     }
 
     /** Локатор узла внутри тела статьи: тем же xpath в содержании легко поймать не то. */
-    private static org.openqa.selenium.By inArticle(String xpathInside) {
+    private static By inArticle(String xpathInside) {
         return xpath("//*[@resource-id='" + ARTICLE_CONTAINER + "']" + xpathInside);
     }
 
     /**
-     * Ссылка в теле статьи. Сам текст ссылки лежит в TextView, а нажатие принимает
-     * обёртка вокруг него: тап по TextView WebView просто проглатывает, и тест молча
-     * продолжается на прежней странице — на это ушло два прогона, пока не стало видно,
-     * что статья не сменилась.
-     */
-    private static SelenideElement articleLink(String linkText) {
-        return $(inArticle("//android.view.View[@clickable='true']"
-                + "[.//android.widget.TextView[@text='" + linkText + "']]"));
-    }
-
-    /**
-     * Нажимает ссылку, предварительно подведя её под палец.
+     * Нажимает ссылку в теле статьи. С обычным {@code $(...).click()} этот шаг не работает
+     * по двум причинам, и обе тихие — тест не падает, а идёт дальше по чужому экрану.
      * <p>
-     * Панель действий («Сохранить», «Язык», «Содержание») висит поверх статьи, и ссылка
-     * может оказаться прямо под ней — так и вышло с «{@value #OFFICIAL_SITE_LINK}». Тап
-     * тогда достаётся панели: тест открывал список языков вместо сайта Oracle. Поэтому
-     * сначала прокручиваем статью, пока ссылка не окажется выше панели.
+     * Первая: текст ссылки лежит в {@code TextView}, а нажатие принимает обёртка вокруг
+     * него — тап по самому тексту WebView проглатывает, и статья не меняется. Поэтому
+     * локатор спрашивает кликабельного родителя.
+     * <p>
+     * Вторая: панель действий («Сохранить», «Язык», «Содержание») висит поверх статьи, и
+     * ссылка может оказаться прямо под ней — так и вышло с «{@value #OFFICIAL_SITE_LINK}».
+     * Тап тогда достаётся панели: тест открывал список языков вместо сайта Java. Поэтому
+     * перед нажатием статья прокручивается, пока ссылка не окажется выше панели.
      */
-    private static void click(SelenideElement link) {
+    private static void clickArticleLink(String linkText) {
+        SelenideElement link = $(inArticle("//android.view.View[@clickable='true']"
+                + "[.//android.widget.TextView[@text='" + linkText + "']]"));
+
         for (int step = 0; step < SCROLL_STEPS_LIMIT && !isAboveActionBar(link); step++) {
             scrollArticle();
         }
