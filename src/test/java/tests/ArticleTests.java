@@ -1,16 +1,21 @@
 package tests;
 
 import com.codeborne.selenide.SelenideElement;
+import io.appium.java_client.android.AndroidDriver;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
 
+import java.time.Duration;
 import java.util.Map;
 
 import static com.codeborne.selenide.CollectionCondition.sizeGreaterThan;
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
+import static com.codeborne.selenide.Selenide.Wait;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
 import static io.appium.java_client.AppiumBy.androidUIAutomator;
 import static io.appium.java_client.AppiumBy.id;
@@ -56,6 +61,15 @@ public class ArticleTests extends TestBase {
      */
     private static final int SCROLL_STEPS_LIMIT = 15;
 
+    /** Сколько раз пробуем нажать ссылку, уводящую из приложения. */
+    private static final int LINK_TAP_ATTEMPTS = 3;
+
+    /** Сколько ждём, что статья уйдёт с экрана после нажатия такой ссылки. */
+    private static final Duration LEAVE_ARTICLE_TIMEOUT = Duration.ofSeconds(15);
+
+    /** Ссылки нет в дереве элементов: она за пределами экрана, WebView её не отдаёт. */
+    private static final int LINK_OFF_SCREEN = Integer.MIN_VALUE;
+
     @Test
     void openJavaArticleTest() {
         step("Пропуск онбординга", TestBase::skipOnboarding);
@@ -96,7 +110,7 @@ public class ArticleTests extends TestBase {
         );
 
         step("Переход по ссылке «" + OFFICIAL_SITE_LINK + "»", () ->
-            clickArticleLink(OFFICIAL_SITE_LINK)
+            clickLinkLeavingApp(OFFICIAL_SITE_LINK)
         );
 
         step("Проверка, что открылся официальный сайт Java", () -> {
@@ -138,9 +152,71 @@ public class ArticleTests extends TestBase {
             + "[.//android.widget.TextView[@text='" + linkText + "']]"));
 
         for (int step = 0; step < SCROLL_STEPS_LIMIT && !isAboveActionBar(link); step++) {
+            int before = linkTop(link);
             scrollArticle();
+            if (linkTop(link) == before && before != LINK_OFF_SCREEN) {
+                throw new AssertionError("The article did not move, so the '" + linkText
+                    + "' link stays under the action bar (link top " + before
+                    + ", action bar top " + actionBarTop() + "). A tap there would go to the"
+                    + " action bar, not to the link. See docs/local-run.md, item 9.");
+            }
         }
-        link.shouldBe(visible).click();
+
+        // Тап под панелью достаётся панели, и это ничем не проявляется: открывается её
+        // диалог, статья остаётся на экране, а падает уже следующая проверка. Поэтому
+        // не нажимаем вовсе, если подвести ссылку не удалось.
+        if (!isAboveActionBar(link)) {
+            throw new AssertionError("The '" + linkText + "' link is still not above the action"
+                + " bar after " + SCROLL_STEPS_LIMIT + " scroll steps (link top "
+                + linkTop(link) + ", action bar top " + actionBarTop() + ")."
+                + " See docs/local-run.md, item 9.");
+        }
+        link.click();
+    }
+
+    /**
+     * Нажимает ссылку, которая уводит из приложения, и убеждается, что она сработала.
+     * <p>
+     * Тап по ссылке внутри WebView иногда проходит впустую: событие до страницы доходит,
+     * а перехода не начинается. Молча — статья остаётся на экране, и падает уже проверка
+     * следующего шага, по которой не понять, что именно не сработало. Поэтому нажатие
+     * повторяется, а если не сработало совсем — сообщение называет, что на экране вместо
+     * браузера. Пустой экран вместо браузера бывает и когда на устройстве нет приложения,
+     * готового открыть внешнюю ссылку.
+     */
+    private static void clickLinkLeavingApp(String linkText) {
+        for (int attempt = 0; attempt < LINK_TAP_ATTEMPTS; attempt++) {
+            clickArticleLink(linkText);
+            if (articleLeftTheScreen()) {
+                return;
+            }
+        }
+        throw new AssertionError("Tapping the '" + linkText + "' link did not leave the article"
+            + " after " + LINK_TAP_ATTEMPTS + " attempts. The screen belongs to " + screenOwner()
+            + ". Check that the device has an app to open external links.");
+    }
+
+    private static boolean articleLeftTheScreen() {
+        try {
+            Wait().withTimeout(LEAVE_ARTICLE_TIMEOUT)
+                .until(driver -> driver.findElements(id(ARTICLE_CONTAINER)).isEmpty());
+            return true;
+        } catch (TimeoutException e) {
+            return false;
+        }
+    }
+
+    private static String screenOwner() {
+        WebDriver driver = getWebDriver();
+        if (driver instanceof AndroidDriver android) {
+            return android.getCurrentPackage() + " (" + android.currentActivity() + ")";
+        }
+        return driver.getClass().getSimpleName();
+    }
+
+    /** Верх ссылки или {@link #LINK_OFF_SCREEN}, если её сейчас нет в дереве элементов. */
+    private static int linkTop(SelenideElement link) {
+        return link.exists() ? link.getLocation().getY() : LINK_OFF_SCREEN;
     }
 
     private static boolean isAboveActionBar(SelenideElement link) {
