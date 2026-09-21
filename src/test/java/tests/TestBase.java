@@ -25,6 +25,7 @@ import static com.codeborne.selenide.Selenide.open;
 import static com.codeborne.selenide.WebDriverRunner.getWebDriver;
 import static config.Project.deviceHost;
 import static io.appium.java_client.AppiumBy.id;
+import static io.qameta.allure.Allure.step;
 
 @ExtendWith(SessionDiagnostics.class)
 public class TestBase {
@@ -56,7 +57,10 @@ public class TestBase {
     void startApp() {
         Configuration.browser = driver().getName();
         SelenideLogger.addListener("AllureSelenide", new AllureSelenide());
-        open();
+        // Шаг именованный, чтобы в отчёте было видно: приложение открывает не тест,
+        // а старт сессии. Сайт wikipedia.org при этом не открывается нигде —
+        // тесты работают с приложением, см. docs/local-run.md.
+        step("Запуск приложения на стенде " + deviceHost().name().toLowerCase(), () -> open());
     }
 
     /**
