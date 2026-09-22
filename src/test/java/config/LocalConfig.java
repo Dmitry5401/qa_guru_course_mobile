@@ -10,7 +10,7 @@ import org.aeonbits.owner.Config;
  * Здесь стоит {@code /wd/hub} — под сервер, поднятый как {@code appium --base-path /wd/hub}.
  * Если запускать сервер просто командой {@code appium}, он слушает корень, и суффикс надо
  * убрать: у Appium 2 и 3 базовый путь по умолчанию корневой, {@code /wd/hub} остался
- * в Appium 1. Расхождение ловит проверка в {@link drivers.LocalDriver} до создания сессии.
+ * в Appium 1. Расхождение ловит проверка в {@link drivers.LocalAppiumDriver} до создания сессии.
  * <p>
  * Устройство Appium выбирает по {@code avd}, затем по {@code udid}, затем
  * по {@code platformVersion}, а если ничего не задано — берёт первое устройство

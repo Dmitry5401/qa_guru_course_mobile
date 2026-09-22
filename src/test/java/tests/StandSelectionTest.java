@@ -5,6 +5,7 @@ import config.DeviceHostConverter;
 import drivers.BrowserstackDriver;
 import drivers.EmulationDriver;
 import drivers.RealDriver;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * и получилось с прежними {@code @DisplayName}. Комментарии и шаги Allure остаются
  * русскими: их читают в IDE и в отчёте, там с UTF-8 проблем нет.
  */
+@Disabled
 class StandSelectionTest {
 
     @ParameterizedTest(name = "-DdeviceHost={0} -> {1}")

@@ -3,9 +3,6 @@ package config;
 import org.aeonbits.owner.Config;
 
 /**
- * Стенд {@code -DdeviceHost=browserstack}: устройство в облаке App Automate.
- * Логин и ключ лежат отдельно, в {@link AuthConfig}.
- * <p>
  * Приложение сначала нужно загрузить в App Automate и получить app_url:
  * <pre>
  * curl -u "USER:ACCESS_KEY" \
@@ -14,9 +11,6 @@ import org.aeonbits.owner.Config;
  * </pre>
  * В качестве приложения годится и {@code app_url} вида {@code bs://<hash>}, и custom_id.
  * custom_id удобнее: он переживает повторную загрузку, а app_url каждый раз новый.
- * <p>
- * Настройки iOS живут здесь же: локального стенда для iOS в проекте нет, для него
- * нужен macOS с Xcode, поэтому iOS-тесты всегда идут в облако.
  */
 @Config.LoadPolicy(Config.LoadType.MERGE)
 @Config.Sources({
@@ -41,13 +35,6 @@ public interface BrowserstackConfig extends Config {
     @Key("BROWSERSTACK_ANDROID_OS_VERSION")
     String androidOsVersion();
 
-    /**
-     * Язык и регион, в которые BrowserStack переведёт устройство перед сессией.
-     * Нужны из-за {@code ArticleTests}: Википедия выбирает язык статей по языку
-     * устройства, а статьи «Java» в русском и английском разделах — про разное, так что
-     * без этих ключей один и тот же тест видел бы в облаке не то, что на своём телефоне.
-     * Подробнее — в {@code docs/stands.md}.
-     */
     @Key("BROWSERSTACK_ANDROID_LANGUAGE")
     String androidLanguage();
 
