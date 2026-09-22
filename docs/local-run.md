@@ -1,9 +1,10 @@
 # Локальный прогон: эмулятор или телефон вместо BrowserStack
 
-Тесты в `src/test/java/tests/local` идут через `drivers/LocalDriver` на Appium, поднятый на своей
-машине. Документ фиксирует, обо что споткнулся первый вариант драйвера и почему настройки лежат
-в `local.properties`. Всё проверено 17 сентября 2026 года на Appium 2.19.0 с драйвером
-uiautomator2 4.2.3 и на Appium 3.7.0 с uiautomator2 8.7.0.
+Стенды `-DdeviceHost=emulation` и `-DdeviceHost=real` идут через `drivers/LocalAppiumDriver`
+на Appium, поднятый на своей машине. Как устроен выбор стенда и что лежит в каком конфиге —
+в [stands.md](stands.md); здесь про то, обо что спотыкается локальный запуск.
+Всё проверено 17 сентября 2026 года на Appium 2.19.0 с драйвером uiautomator2 4.2.3
+и на Appium 3.7.0 с uiautomator2 8.7.0.
 
 ## Что нужно на машине
 
@@ -43,7 +44,7 @@ Gradle по умолчанию печатал только `SessionNotCreatedExc
 и текст ошибки виден прямо в консоли. Полный отчёт с page source и скриншотом всё так же
 лежит в `build/reports/tests/test/index.html`.
 
-Перед созданием сессии `LocalDriver` дёргает `<LOCAL_APPIUM_URL>status` и на частые случаи
+Перед созданием сессии `LocalAppiumDriver` дёргает `<LOCAL_APPIUM_URL>status` и на частые случаи
 отвечает по-человечески: сервер не запущен либо базовый путь не совпал с конфигом.
 
 ### Как читать `SessionNotCreatedException`
@@ -63,7 +64,6 @@ Gradle по умолчанию печатал только `SessionNotCreatedExc
 | `Response code 404` сразу, без ожидания | базовый путь сервера не совпал с `LOCAL_APPIUM_URL` |
 | `Neither ANDROID_HOME nor ANDROID_SDK_ROOT environment variable was exported` | Appium не видит Android SDK, нужна переменная `ANDROID_HOME` |
 | `Could not find a connected Android device in 20000ms` | в `adb devices` нет устройства в состоянии `device` |
-| `Unable to find an active device or emulator with OS ...` | `LOCAL_PLATFORM_VERSION` не совпала ни с одним устройством |
 
 ## Грабли, на которые наступает локальный запуск
 
@@ -106,7 +106,7 @@ $ curl -s http://localhost:4723/wd/hub/status
         http://127.0.0.1:4723/wd/hub (only accessible from the same host)
 ```
 
-Если базовый путь и `LOCAL_APPIUM_URL` разъехались, проверка в `LocalDriver` пробует оба варианта
+Если базовый путь и `LOCAL_APPIUM_URL` разъехались, проверка в `LocalAppiumDriver` пробует оба варианта
 и называет рабочий адрес:
 
 ```
@@ -119,20 +119,19 @@ or restart the server so it serves http://localhost:4723.
 Починить можно с любой стороны: либо привести `LOCAL_APPIUM_URL` к адресу, который сервер
 действительно слушает, либо перезапустить сервер под адрес из конфига.
 
-### 2. Устройство выбирается по `udid`, а не по `deviceName`
+### 2. Устройство выбирается по `udid` или `avd`, а не по `deviceName`
 
 `deviceName` в Appium 2 — просто подпись, на выбор устройства она не влияет. Порядок из
 `appium-android-driver`, `getDeviceInfoFromCaps()`:
 
-1. задан `udid` — берётся устройство с этим серийником;
-2. иначе задан `platformVersion` — ищется устройство с такой версией ОС;
+1. задан `avd` — берётся эмулятор с таким именем, и Appium сам поднимет его, если тот не запущен;
+2. иначе задан `udid` — берётся устройство с этим серийником;
 3. иначе берётся первое устройство из `adb devices`.
 
-Поэтому серийник вида `R58R611HJWD` нужно передавать как `udid`. Это особенно важно, когда
-одновременно подняты эмулятор и подключён телефон: иначе тест уйдёт на то устройство, которое
-случайно оказалось первым. Серийник кладётся в `LOCAL_DEVICE_UDID`, версия ОС —
-в `LOCAL_PLATFORM_VERSION`; оба ключа можно оставить пустыми, тогда возьмётся единственное
-подключённое устройство.
+Отсюда и разделение стендов: `emulation` задаёт `avd` из ключа `EMULATION_AVD`, `real` —
+`udid` из `REAL_DEVICE_UDID`. Оба ключа можно оставить пустыми, тогда возьмётся единственное
+подключённое устройство. Но если одновременно поднят эмулятор и подключён телефон, задавать
+ключ обязательно, иначе тест уйдёт на то устройство, которое случайно оказалось первым.
 
 ### 3. Версия приложения прибита гвоздями
 
@@ -161,7 +160,7 @@ java.io.IOException: Server returned HTTP response code: 403
 
 Тот же файл `curl` забирает без проблем. Дело в
 [User-Agent policy](https://foundation.wikimedia.org/wiki/Policy:User-Agent_policy) Wikimedia:
-дефолтный `Java/21.0.10` блокируется. `LocalDriver` скачивает APK через `URLConnection`
+дефолтный `Java/21.0.10` блокируется. `LocalAppiumDriver` скачивает APK через `URLConnection`
 с явным User-Agent проекта.
 
 Скачанный APK лежит в `apps/` — не в `build/`, чтобы `clean` не стирал его, и не в ресурсах,
@@ -199,14 +198,14 @@ $(id("org.wikipedia:id/search_container")).click();
 Тот же прогон с русской локалью проходит целиком: по запросу `Appium` находятся `AppImage`,
 `App Inventor` и `Appian Way Productions`.
 
-Общее правило для локального прогона: он идёт на личном устройстве с любым языком системы,
-поэтому опираться стоит на `resource-id`. `accessibilityId` уместен там, где идентификатор задан
+Общее правило: локальный прогон идёт на личном устройстве с любым языком системы, поэтому
+опираться стоит на `resource-id`. `accessibilityId` уместен там, где идентификатор задан
 в коде приложения, а не взят из переводимых ресурсов — так сделано в `IosTextInputTests`
 с `Text Input` и `Text Output` в демо-приложении BrowserStack.
 
-Тесты в `src/test/java/tests` на BrowserStack тот же `accessibilityId("Search Wikipedia")`
-пока используют и проходят: устройства BrowserStack по умолчанию англоязычные. Но если
-когда-нибудь понадобится прогон на неанглийской локали, локаторы там придётся заменить так же.
+По `resource-id` теперь ищут и тесты, которые идут в BrowserStack: набор тестов один на все
+стенды. Устройства BrowserStack по умолчанию англоязычные, так что `accessibilityId` там ещё
+работал бы, но держать два набора локаторов под одно и то же приложение незачем.
 
 Кстати, попутно проверялась и отвергнутая гипотеза: карточка поиска лежит первым элементом внутри
 RecyclerView ленты, и казалось, что она могла не дождаться загрузки из API Wikimedia. Прогон
@@ -258,7 +257,8 @@ $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click();
 ## Запуск
 
 ```bash
-./gradlew test --tests "tests.local.*"
+./gradlew test -DdeviceHost=real -DREAL_DEVICE_UDID=R58R611HJWD   # телефон по USB
+./gradlew test -DdeviceHost=emulation -DEMULATION_AVD=Pixel_10a   # эмулятор
 ```
 
 Префикс `./` обязателен в Git Bash, PowerShell и любой другой оболочке, кроме `cmd`: только
@@ -266,12 +266,8 @@ $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click();
 `bash: gradlew: command not found`, хотя файл лежит рядом. В `cmd` работает короткое
 `gradlew test ...`, потому что там подхватывается `gradlew.bat`.
 
-Любой ключ из `local.properties` переопределяется через `-D`, потому что Owner читает
-`system:properties` первым:
-
-```bash
-./gradlew test --tests "tests.local.*" -DLOCAL_DEVICE_UDID=R58R611HJWD
-```
+Любой ключ переопределяется через `-D`, потому что Owner читает `system:properties` первым,
+так что менять файлы настроек ради разового прогона не нужно.
 
 ## Эмулятор вместо телефона
 
@@ -280,20 +276,15 @@ $(id("org.wikipedia:id/fragment_onboarding_skip_button")).click();
 поэтому копия `SearchTests` под каждый девайс дала бы дублирование без выгоды. Тем более
 локаторы опираются на `resource-id`, а он не зависит ни от языка системы, ни от версии Android.
 
-Эмулятор выбирается по имени из Device Manager:
+Эмулятор выбирается по имени из Device Manager — это и есть стенд `emulation`:
 
 ```bash
-./gradlew test --tests "tests.local.*" -DLOCAL_AVD=Pixel_10a
+./gradlew test -DdeviceHost=emulation -DEMULATION_AVD=Pixel_10a
 ```
 
 Для эмулятора имя удобнее серийника: оно не меняется, а номер в `emulator-5554` зависит
 от порядка запуска. Appium вдобавок сам поднимет эмулятор с таким именем, если тот ещё
 не запущен, — в логе сервера это видно как `Trying to find 'Pixel_10a' emulator`.
-
-Приоритет при выборе устройства: `LOCAL_AVD`, затем `LOCAL_DEVICE_UDID`, затем
-`LOCAL_PLATFORM_VERSION`, иначе первое устройство из `adb devices`. Когда телефон и эмулятор
-подключены одновременно, задавать один из первых двух ключей обязательно, иначе тест уйдёт
-на то устройство, которое случайно оказалось первым в списке.
 
 Если имя AVD не совпадает с существующим (или эмулятор не может запуститься), Appium ждёт
 минуту и отдаёт:
@@ -314,5 +305,6 @@ Original error: Condition unmet after 60005 ms. Timing out.
 менять не нужно.
 
 Это не общее правило, а свойство именно этой сборки: у версии 2017 года (`org.wikipedia.alpha`,
-которая используется в тестах на BrowserStack) на Android 16 и новее не находятся элементы
-поиска вообще — подробности в [browserstack-driver.md](browserstack-driver.md).
+на которой тесты работали раньше) на Android 16 и новее не находятся элементы поиска вообще —
+подробности в [browserstack-driver.md](browserstack-driver.md). Теперь эта сборка не
+используется нигде: в BrowserStack загружен тот же APK, что скачивают локальные стенды.
