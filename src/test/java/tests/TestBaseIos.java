@@ -4,6 +4,8 @@ import com.codeborne.selenide.WebDriverProvider;
 import drivers.BrowserstackIosDriver;
 import helpers.BrowserstackOnlyCondition;
 import org.junit.jupiter.api.extension.ExtendWith;
+import screens.IosHomeScreen;
+import screens.IosTextInputScreen;
 
 /**
  * База для iOS-тестов: механика запуска, вложений и закрытия сессии та же, что в
@@ -15,6 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
  */
 @ExtendWith(BrowserstackOnlyCondition.class)
 public class TestBaseIos extends TestBase {
+
+    IosHomeScreen iosHomeScreen = new IosHomeScreen();
+    IosTextInputScreen iosTextInputScreen = new IosTextInputScreen();
 
     @Override
     protected Class<? extends WebDriverProvider> driver() {
