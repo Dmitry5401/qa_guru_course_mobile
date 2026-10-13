@@ -113,37 +113,14 @@ public class ArticleTests extends TestBase {
         });
     }
 
-    /**
-     * Локатор узла внутри тела статьи: тем же xpath в содержании легко поймать не то.
-     */
     private static By inArticle(String xpathInside) {
         return xpath("//*[@resource-id='" + ARTICLE_CONTAINER + "']" + xpathInside);
     }
 
-    /**
-     * Строка выдачи с точно таким заголовком. Точно таким, а не с вхождением: по «Java»
-     * выдача возвращает ещё JavaScript, Java version history и саму «Java» про остров.
-     */
     private static By searchResult(String title) {
         return xpath("//*[@resource-id='" + SEARCH_RESULT_TITLE + "'][@text='" + title + "']");
     }
 
-    /**
-     * Нажимает ссылку в теле статьи. С обычным {@code $(...).click()} этот шаг не работает
-     * по двум причинам, и обе тихие — тест не падает, а идёт дальше по чужому экрану.
-     * <p>
-     * Первая: текст ссылки лежит в {@code TextView}, а нажатие принимает обёртка вокруг
-     * него — тап по самому тексту WebView проглатывает, и статья не меняется. Поэтому
-     * локатор спрашивает кликабельного родителя.
-     * <p>
-     * Вторая: панель действий («Save», «Language», «Contents») висит поверх статьи, и
-     * ссылка может оказаться прямо под ней — так и вышло с «{@value #OFFICIAL_SITE_LINK}».
-     * Тап тогда достаётся панели: тест открывал список языков вместо сайта Java. Поэтому
-     * перед нажатием статья прокручивается, пока ссылка не окажется выше панели, а если
-     * подвести её не удалось — нажатия не происходит вовсе. Жест ведь может и не сработать,
-     * и тогда прежний код тапал по панели молча: в отчёте это выглядело как падение
-     * следующего шага, где про ссылку и панель уже ни слова.
-     */
     private static void clickArticleLink(String linkText) {
         SelenideElement link = $(inArticle("//android.view.View[@clickable='true']"
             + "[.//android.widget.TextView[@text='" + linkText + "']]"));
@@ -159,9 +136,6 @@ public class ArticleTests extends TestBase {
             }
         }
 
-        // Тап под панелью достаётся панели, и это ничем не проявляется: открывается её
-        // диалог, статья остаётся на экране, а падает уже следующая проверка. Поэтому
-        // не нажимаем вовсе, если подвести ссылку не удалось.
         if (!isAboveActionBar(link)) {
             throw new AssertionError("The '" + linkText + "' link is still not above the action"
                 + " bar after " + SCROLL_STEPS_LIMIT + " scroll steps (link top "
@@ -171,16 +145,6 @@ public class ArticleTests extends TestBase {
         link.click();
     }
 
-    /**
-     * Нажимает ссылку, которая уводит из приложения, и убеждается, что она сработала.
-     * <p>
-     * Тап по ссылке внутри WebView иногда проходит впустую: событие до страницы доходит,
-     * а перехода не начинается. Молча — статья остаётся на экране, и падает уже проверка
-     * следующего шага, по которой не понять, что именно не сработало. Поэтому нажатие
-     * повторяется, а если не сработало совсем — сообщение называет, что на экране вместо
-     * браузера. Пустой экран вместо браузера бывает и когда на устройстве нет приложения,
-     * готового открыть внешнюю ссылку.
-     */
     private static void clickLinkLeavingApp(String linkText) {
         for (int attempt = 0; attempt < LINK_TAP_ATTEMPTS; attempt++) {
             clickArticleLink(linkText);
@@ -217,25 +181,12 @@ public class ArticleTests extends TestBase {
     }
 
     private static boolean isAboveActionBar(SelenideElement link) {
-        // exists() спрашивает без ожидания: ссылка может быть ещё ниже экрана, и тогда
-        // ждать её тридцать секунд бессмысленно — надо прокручивать.
         if (!link.exists()) {
             return false;
         }
         return link.getLocation().getY() + link.getSize().getHeight() < actionBarTop();
     }
 
-    /**
-     * Прокручивает статью на один шаг вниз.
-     * <p>
-     * Жест — именно {@code scrollGesture}: у {@code swipeGesture} есть инерция, и страница
-     * уезжала так далеко, что нужная ссылка пропадала с экрана.
-     * <p>
-     * Область жеста — верхняя половина статьи, и это не украшение. Палец начинает движение
-     * у нижней границы области, поэтому если дотянуть её до панели действий, нажатие
-     * достанется панели: {@code scrollGesture} возвращал {@code false}, страница стояла на
-     * месте, и цикл выше упирался в предохранитель.
-     */
     private static void scrollArticle() {
         SelenideElement article = $(id(ARTICLE_CONTAINER));
         int top = article.getLocation().getY();
