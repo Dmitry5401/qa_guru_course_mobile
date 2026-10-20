@@ -23,10 +23,15 @@
 1. **New Item → Freestyle project**.
 2. **This project is parameterised**, добавить строковые параметры. Имена обязаны совпадать
    с ключами в `browserstack.properties`, иначе Owner их не подхватит:
-   `BROWSERSTACK_ANDROID_DEVICE` = `Samsung Galaxy S22 Ultra`,
-   `BROWSERSTACK_ANDROID_OS_VERSION` = `12.0`,
+   `BROWSERSTACK_ANDROID_DEVICE` = `Samsung Galaxy S23`,
+   `BROWSERSTACK_ANDROID_OS_VERSION` = `13.0`,
    `BROWSERSTACK_IOS_DEVICE` = `iPhone 14`, `BROWSERSTACK_IOS_OS_VERSION` = `16`.
    Параметром можно сделать любой ключ из таблицы ниже, эти четыре — просто самые нужные.
+   Устройство и версия ОС — одна пара. Samsung Galaxy S22 Ultra в App Automate
+   остался только с Android 12.0: параметр устройства `S22 Ultra` вместе с версией
+   `13.0` из файла даёт `BROWSERSTACK_INVALID_OS_VERSION`, сессия не создаётся.
+   Если в джобе устройство всё ещё S22 Ultra, версию надо поставить `12.0`
+   (драйвер для этой пары подставляет `12.0` сам).
 3. **Source Code Management → Git**: `https://github.com/Dmitry5401/qa_guru_course_mobile`.
    В *Branches to build* указать нужную ветку — по умолчанию Jenkins возьмёт `master`, а тесты
    могут лежать в другой.
