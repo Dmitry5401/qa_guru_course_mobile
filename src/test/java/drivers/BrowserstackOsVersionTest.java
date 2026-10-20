@@ -7,6 +7,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class BrowserstackOsVersionTest {
 
     @Test
+    void s22DoesNotKeepAndroid13() {
+        assertEquals("12.0", BrowserstackDriver.resolveAndroidOsVersion(
+                "Samsung Galaxy S22", "13.0"));
+    }
+
+    @Test
+    void s22PlusDoesNotKeepAndroid13() {
+        assertEquals("12.0", BrowserstackDriver.resolveAndroidOsVersion(
+                "Samsung Galaxy S22 Plus", "13.0"));
+    }
+
+    @Test
     void s22UltraDoesNotKeepAndroid13() {
         assertEquals("12.0", BrowserstackDriver.resolveAndroidOsVersion(
                 "Samsung Galaxy S22 Ultra", "13.0"));
