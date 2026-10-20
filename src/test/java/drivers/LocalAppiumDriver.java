@@ -228,5 +228,4 @@ public abstract class LocalAppiumDriver implements WebDriverProvider {
         }
         return app.getAbsolutePath();
     }
-
 }
