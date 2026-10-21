@@ -13,6 +13,9 @@
 - [Запуск тестов из терминала](#run)
 - [Сборка в Jenkins](#jenkins)
 - [Allure-отчёт](#allure)
+- [Интеграция с Allure TestOps](#testops)
+- [Интеграция с Jira](#jira)
+- [Уведомление в Telegram](#telegram)
 - [Подробная документация](#docs)
 
 <a id="tools"></a>
@@ -122,6 +125,15 @@ iOS в облаке: приложение `BStackSampleApp`, iPhone 14, iOS 16.
 `BROWSERSTACK_USERNAME` и `BROWSERSTACK_ACCESS_KEY` читаются из credentials джоба
 и перебивают `auth.properties`.
 
+Прогон публикуется джобой
+[kdp029_mobile](https://jenkins.qa.guru/job/kdp029_mobile/).
+В Allure-отчёте сборки — 3 сценария (`ArticleTests`, `IosTextInputTests`,
+`SearchTests`), исполнитель — Jenkins.
+
+<p align="center">
+<img title="Allure-отчёт прогона мобильных тестов в Jenkins" src="images/screen/AllureMob.png" width="850" alt="Прогон мобильных тестов в Jenkins: 3 теста, 100%">
+</p>
+
 <p align="right"><a href="#readme-top">back to top</a></p>
 
 <a id="allure"></a>
@@ -140,6 +152,54 @@ iOS в облаке: приложение `BStackSampleApp`, iPhone 14, iOS 16.
 Для сессий BrowserStack дополнительно прикладывается видео. При падении
 Selenide сохраняет скриншот и page source ещё и в HTML-отчёт Gradle:
 `build/reports/tests/test/index.html`.
+
+Опубликованный отчёт прогона — в разделе [Jenkins](#jenkins).
+
+<p align="right"><a href="#readme-top">back to top</a></p>
+
+<a id="testops"></a>
+## :ballot_box_with_check: Интеграция с Allure TestOps
+
+Прогоны загружаются в проект Allure TestOps `kdp029_diplom_testops_mobile`.
+На дашборде — 3 автоматизированных теста (100%): поиск статьи, статья о Java
+и ввод текста в iOS-приложении.
+
+### Дашборд
+
+<p align="center">
+<img title="Дашборд Allure TestOps" src="images/screen/Dachboard.png" width="850" alt="Дашборд TestOps: 3 автотеста, 100%">
+</p>
+
+### Тест-кейсы
+
+<p align="center">
+<img title="Тест-кейсы Allure TestOps" src="images/screen/TeasCases.png" width="850" alt="Тест-кейсы мобильных тестов в TestOps">
+</p>
+
+<p align="right"><a href="#readme-top">back to top</a></p>
+
+<a id="jira"></a>
+## :ballot_box_with_check: Интеграция с Jira
+
+Задача «Создайте автотесты на проверку мобильного приложения Wikipedia»
+связана с тест-кейсами TestOps. В блоке «ТестOps: Артефакты тестов» видны
+`openJavaArticleTest`, `successfulSearchTest` и `enteredTextIsShownInOutputTest`.
+
+<p align="center">
+<img title="Задача Jira со связанными тест-кейсами" src="images/screen/JiraConnection.png" width="850" alt="Jira: задача и тест-кейсы TestOps">
+</p>
+
+<p align="right"><a href="#readme-top">back to top</a></p>
+
+<a id="telegram"></a>
+## :ballot_box_with_check: Уведомление в Telegram
+
+По завершении прогона бот присылает сводку: 3 из 3 успешных сценариев
+и ссылку на Allure-отчёт Jenkins.
+
+<p align="center">
+<img title="Уведомление Telegram о прогоне мобильных тестов" src="images/screen/TelegrammReport.png" width="550" alt="Telegram: 3 успешных мобильных теста">
+</p>
 
 <p align="right"><a href="#readme-top">back to top</a></p>
 
