@@ -117,5 +117,4 @@ public class TestBase {
             Attach.addVideo(sessionId);
         }
     }
-
 }
