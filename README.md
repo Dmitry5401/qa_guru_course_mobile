@@ -21,9 +21,9 @@
 <a id="tools"></a>
 ## :ballot_box_with_check: Технологии и инструменты:
 
-| Java | IntelliJ IDEA | GitHub | JUnit 5 | Gradle | Selenide | Allure | Jenkins |
-|:----:|:-------------:|:------:|:-------:|:------:|:--------:|:------:|:-------:|
-| <a href="https://www.java.com/"><img src="images/logo/Java.svg" width="50" height="50" alt="Java"/></a> | <a href="https://www.jetbrains.com/idea/"><img src="images/logo/Idea.svg" width="50" height="50" alt="IDEA"/></a> | <a href="https://github.com/"><img src="images/logo/GitHub.png" width="50" height="50" alt="GitHub"/></a> | <a href="https://junit.org/junit5/"><img src="images/logo/Junit5.svg" width="50" height="50" alt="JUnit 5"/></a> | <a href="https://gradle.org/"><img src="images/logo/Gradle.png" width="50" height="50" alt="Gradle"/></a> | <a href="https://selenide.org/"><img src="images/logo/Selenide.svg" width="50" height="50" alt="Selenide"/></a> | <a href="https://github.com/allure-framework"><img src="images/logo/Allure.svg" width="50" height="50" alt="Allure"/></a> | <a href="https://www.jenkins.io/"><img src="images/logo/Jenkins.svg" width="50" height="50" alt="Jenkins"/></a> |
+| Java | IntelliJ IDEA | GitHub | JUnit 5 | Gradle | Selenide | Appium | BrowserStack | Allure | Jenkins | Allure TestOps | Jira | Telegram |
+|:----:|:-------------:|:------:|:-------:|:------:|:--------:|:------:|:------------:|:------:|:-------:|:--------------:|:----:|:--------:|
+| <a href="https://www.java.com/"><img src="images/logo/Java.svg" width="50" height="50" alt="Java"/></a> | <a href="https://www.jetbrains.com/idea/"><img src="images/logo/Idea.svg" width="50" height="50" alt="IDEA"/></a> | <a href="https://github.com/"><img src="images/logo/GitHub.png" width="50" height="50" alt="GitHub"/></a> | <a href="https://junit.org/junit5/"><img src="images/logo/Junit5.svg" width="50" height="50" alt="JUnit 5"/></a> | <a href="https://gradle.org/"><img src="images/logo/Gradle.png" width="50" height="50" alt="Gradle"/></a> | <a href="https://selenide.org/"><img src="images/logo/Selenide.svg" width="50" height="50" alt="Selenide"/></a> | <a href="https://appium.io/"><img src="images/logo/Appium.svg" width="50" height="50" alt="Appium"/></a> | <a href="https://www.browserstack.com/app-automate"><img src="images/logo/BrowserStack.svg" width="50" height="50" alt="BrowserStack"/></a> | <a href="https://github.com/allure-framework"><img src="images/logo/Allure.svg" width="50" height="50" alt="Allure"/></a> | <a href="https://www.jenkins.io/"><img src="images/logo/Jenkins.svg" width="50" height="50" alt="Jenkins"/></a> | <a href="https://qameta.io/"><img src="images/logo/Allure_TO.svg" width="50" height="50" alt="Allure TestOps"/></a> | <a href="https://www.atlassian.com/software/jira"><img src="images/logo/Jira.svg" width="50" height="50" alt="Jira"/></a> | <a href="https://web.telegram.org/"><img src="images/logo/Telegram.svg" width="50" height="50" alt="Telegram"/></a> |
 
 Тесты написаны на языке <code>Java</code>, сборщик — <code>Gradle</code> 8.13,
 фреймворк модульного тестирования — <code>JUnit 5</code>. Мобильные сессии
@@ -31,6 +31,10 @@
 [Selenide](https://selenide.org/). Настройки стендов читает
 [Owner](http://owner.aeonbits.org/): значения из командной строки и переменных
 окружения важнее файлов в <code>src/test/resources</code>. Отчёт — <code>Allure</code>.
+Прогон из [Jenkins](https://www.jenkins.io/) публикует отчёт, запуск в
+[Allure TestOps](https://qameta.io/), связь кейсов с задачей в
+[Jira](https://www.atlassian.com/software/jira) и уведомление в
+[Telegram](https://web.telegram.org/).
 
 Устройства:
 
